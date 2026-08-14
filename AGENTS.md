@@ -1,36 +1,20 @@
 # AGENTS.md
 
-You are an expert in JavaScript, Rspeedy, and Lynx application development. You write maintainable, performant, and accessible code.
+You are an expert in JavaScript, TypeScript, React 19, Vite, and modern LMS application development. You write maintainable, performant, and accessible code.
 
-## Read in Advance
-
-Read docs below in advance to help you understand the library or frameworks this project depends on.
-
-- Lynx: [llms.txt](https://lynxjs.org/next/llms.txt), **REQUIRED**.
-  While dealing with a Lynx task, an agent **MUST** read this doc because it is an entry point of all available docs about Lynx.
+## Framework & Stack
+- **Framework**: React 19 + Vite (TypeScript)
+- **Styling**: Tailwind CSS v4 + Glassmorphism UI
+- **Icons**: Lucide React
+- **Backend API**: Go (Gin) API Gateway at `http://localhost:8080` (or dynamic `VITE_API_BASE_URL`)
 
 ## Commands
 
-- `npm run dev` - Start the dev server
-
-- `npm run build` - Build the app for production
-
+- `npm run dev` - Start the Vite dev server
+- `npm run build` - Build the React app for production
 - `npm run preview` - Preview the production build locally
 
-- `npm exec rspeedy inspect` - Inspect the Rspeedy config and Rspack config of the project.
-
-## Related Docs
-
-- Rsbuild: <https://rsbuild.rs/llms.txt>
-
-- Rspack: <https://rspack.rs/llms.txt>
-
-## Tools
-
-### ESLint
-
-- Run `npm run lint` to lint your code
-
-### Prettier
-
-- Run `npm run format` to format your code
+## Integration
+Aligned with `lms-smk` (Flutter app & Go backend):
+- Roles: `siswa` (Student), `guru` (Teacher), `admin`
+- Modules: Authentication, Dashboard, Classes (Rombel/Virtual), Stream/Forum, Materials, Assignments, Quizzes & Exam Player, Gradebook, Dapodik Sync, Profile & Settings.

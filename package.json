@@ -1,40 +1,32 @@
 {
   "name": "lms-web",
+  "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "rspeedy build",
-    "dev": "rspeedy dev",
-    "format": "prettier --write .",
+    "dev": "vite",
+    "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "rspeedy preview",
-    "start": "node server.js"
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@lynx-js/react": "^0.123.3"
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.17.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.3.0",
+    "tailwind-merge": "^3.0.2"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@lynx-js/preact-devtools": "5.0.1-20260716151326-abdb87c",
-    "@lynx-js/qrcode-rsbuild-plugin": "^0.6.0",
-    "@lynx-js/react-rsbuild-plugin": "^0.18.3",
-    "@lynx-js/rspeedy": "^0.16.3",
-    "@lynx-js/types": "4.0.0",
-    "@rsbuild/plugin-type-check": "1.5.0",
-    "@types/react": "^19.2.17",
-    "autoprefixer": "^10.5.4",
-    "eslint": "^10.7.0",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.3",
-    "globals": "^17.7.0",
-    "postcss": "^8.5.26",
-    "prettier": "^3.9.5",
-    "tailwindcss": "^3.4.19",
-    "typescript": "~6.0.3",
-    "typescript-eslint": "^8.64.0"
-  },
-  "engines": {
-    "node": "^20.19.0 || >=22.12.0"
-  },
-  "private": true
+    "@tailwindcss/vite": "^4.0.9",
+    "@types/node": "^22.13.10",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^4.0.9",
+    "typescript": "^5.7.3",
+    "vite": "^6.2.0"
+  }
 }
