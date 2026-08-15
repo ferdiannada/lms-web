@@ -63,13 +63,13 @@ export const GradebookPage: React.FC = () => {
   return (
     <div className="space-y-6 animate-in fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-6 rounded-3xl border border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-2xl font-extrabold text-white flex items-center gap-2.5">
-            <Award className="w-6 h-6 text-amber-400" />
+          <h1 className="text-2xl font-extrabold text-slate-900 flex items-center gap-2.5">
+            <Award className="w-6 h-6 text-amber-500" />
             {isTeacher ? 'Rekap & Transkrip Nilai Siswa' : 'Riwayat & Transkrip Nilai Saya'}
           </h1>
-          <p className="text-slate-400 text-sm">
+          <p className="text-slate-500 text-sm">
             {isTeacher
               ? 'Daftar rekapitulasi nilai tugas dan kuis siswa yang tersimpan di database.'
               : 'Hasil evaluasi tugas, kuis, dan ujian semester yang telah dinilai.'}
@@ -78,15 +78,15 @@ export const GradebookPage: React.FC = () => {
 
         {/* Class Selector Dropdown */}
         {classes.length > 0 && (
-          <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 p-2 rounded-2xl">
-            <BookOpen className="w-4 h-4 text-indigo-400 ml-2" />
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 p-2 rounded-2xl shadow-2xs">
+            <BookOpen className="w-4 h-4 text-indigo-600 ml-2" />
             <select
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
-              className="bg-transparent text-sm font-bold text-slate-100 focus:outline-none pr-4 cursor-pointer"
+              className="bg-transparent text-sm font-bold text-slate-800 focus:outline-none pr-4 cursor-pointer"
             >
               {classes.map((c) => (
-                <option key={c.id} value={c.id} className="bg-slate-900 text-slate-100">
+                <option key={c.id} value={c.id} className="bg-white text-slate-800">
                   {c.rombel} - {c.name}
                 </option>
               ))}
@@ -97,8 +97,8 @@ export const GradebookPage: React.FC = () => {
 
       {/* Loading state */}
       {isLoading && (
-        <div className="p-12 text-center text-slate-400">
-          <div className="inline-block w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+        <div className="p-12 text-center text-slate-500">
+          <div className="inline-block w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-3"></div>
           <p>Memuat rekapitulasi nilai dari database...</p>
         </div>
       )}
@@ -107,19 +107,19 @@ export const GradebookPage: React.FC = () => {
       {!isLoading && !isTeacher && (
         <div className="space-y-6">
           {studentHistory.length === 0 ? (
-            <div className="glass-panel p-8 text-center text-slate-400 rounded-3xl border border-slate-800">
+            <div className="bg-white p-8 text-center text-slate-500 rounded-3xl border border-slate-200 shadow-sm">
               Belum ada riwayat tugas atau kuis yang dikerjakan pada kelas ini.
             </div>
           ) : (
-            <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-4">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <FileCheck className="w-5 h-5 text-emerald-400" />
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <FileCheck className="w-5 h-5 text-emerald-600" />
                 Daftar Tugas & Ujian yang Diselesaikan
               </h2>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm text-slate-300">
-                  <thead className="bg-slate-900/80 text-xs uppercase font-bold text-slate-400 border-b border-slate-800">
+                <table className="w-full text-left text-sm text-slate-700">
+                  <thead className="bg-slate-50 text-xs uppercase font-bold text-slate-500 border-b border-slate-200">
                     <tr>
                       <th className="p-3.5">Nama Kegiatan</th>
                       <th className="p-3.5">Kategori</th>
@@ -128,30 +128,30 @@ export const GradebookPage: React.FC = () => {
                       <th className="p-3.5">Nilai Perolehan</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/80">
+                  <tbody className="divide-y divide-slate-100">
                     {studentHistory.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-900/40 transition-colors">
-                        <td className="p-3.5 font-bold text-white">{item.title}</td>
+                      <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="p-3.5 font-bold text-slate-900">{item.title}</td>
                         <td className="p-3.5">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                            item.type === 'quiz' ? 'bg-amber-500/20 text-amber-300' : 'bg-indigo-500/20 text-indigo-300'
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase ${
+                            item.type === 'quiz' ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
                           }`}>
                             {item.type === 'quiz' ? 'Ujian Online' : 'Tugas Mandiri'}
                           </span>
                         </td>
-                        <td className="p-3.5 text-xs text-slate-400">{item.class_name}</td>
-                        <td className="p-3.5 text-xs text-slate-400">
+                        <td className="p-3.5 text-xs text-slate-500">{item.class_name}</td>
+                        <td className="p-3.5 text-xs text-slate-500">
                           {item.submitted_at || item.completed_at
                             ? new Date(item.submitted_at || item.completed_at!).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
                             : '-'}
                         </td>
                         <td className="p-3.5">
                           {item.score != null ? (
-                            <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-extrabold text-xs">
+                            <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-extrabold text-xs">
                               {item.score} / {item.max_score}
                             </span>
                           ) : (
-                            <span className="text-xs text-amber-400 font-medium">Menunggu Nilai</span>
+                            <span className="text-xs text-amber-600 font-medium">Menunggu Nilai</span>
                           )}
                         </td>
                       </tr>
@@ -166,17 +166,17 @@ export const GradebookPage: React.FC = () => {
 
       {/* GURU VIEW: Rekap Nilai Rombel */}
       {!isLoading && isTeacher && (
-        <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-4">
-          <h2 className="text-lg font-bold text-white">Daftar Nilai Rombel</h2>
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+          <h2 className="text-lg font-bold text-slate-900">Daftar Nilai Rombel</h2>
 
           {teacherEntries.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-6">
+            <p className="text-sm text-slate-500 text-center py-6">
               Belum ada data nilai atau siswa terdaftar di rombel kelas ini.
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-300">
-                <thead className="bg-slate-900/80 text-xs uppercase font-bold text-slate-400 border-b border-slate-800">
+              <table className="w-full text-left text-sm text-slate-700">
+                <thead className="bg-slate-50 text-xs uppercase font-bold text-slate-500 border-b border-slate-200">
                   <tr>
                     <th className="p-3.5">Nama Siswa</th>
                     <th className="p-3.5">NISN</th>
@@ -186,18 +186,18 @@ export const GradebookPage: React.FC = () => {
                     <th className="p-3.5">Rata-Rata</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/80">
+                <tbody className="divide-y divide-slate-100">
                   {teacherEntries.map((entry) => (
-                    <tr key={entry.student_id} className="hover:bg-slate-900/40 transition-colors">
-                      <td className="p-3.5 font-bold text-white">{entry.student_name}</td>
-                      <td className="p-3.5 text-slate-400 font-mono text-xs">{entry.nisn || '-'}</td>
+                    <tr key={entry.student_id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="p-3.5 font-bold text-slate-900">{entry.student_name}</td>
+                      <td className="p-3.5 text-slate-500 font-mono text-xs">{entry.nisn || '-'}</td>
                       {gradeColumns.map((col) => (
-                        <td key={col} className="p-3.5 font-semibold text-slate-200">
+                        <td key={col} className="p-3.5 font-semibold text-slate-800">
                           {entry.grades[col] !== undefined ? String(entry.grades[col]) : '-'}
                         </td>
                       ))}
                       <td className="p-3.5">
-                        <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-extrabold text-xs">
+                        <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-extrabold text-xs">
                           {entry.average_score}
                         </span>
                       </td>

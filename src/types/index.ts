@@ -256,3 +256,24 @@ export interface DashboardSummary {
   active_quizzes: Quiz[];
   recent_materials: Material[];
 }
+
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  type: 'forum_mention' | 'forum_reply' | 'forum_comment' | 'material' | 'assignment' | 'quiz' | 'other' | string;
+  title: string;
+  body: string;
+  actor_id?: string;
+  actor?: {
+    id: string;
+    name: string;
+    avatar_url?: string;
+    role?: string;
+  };
+  class_id?: string;
+  post_id?: string;
+  comment_id?: string;
+  read_at?: string | null;
+  created_at: string;
+}
+

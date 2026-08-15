@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Quiz, Question, QuizAttempt } from '../types';
@@ -15,6 +15,10 @@ export const QuizPlayer: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attemptResult, setAttemptResult] = useState<{ score: number; total: number; attempt: QuizAttempt } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Use ref to keep latest answers available for timer auto-submit without stale closure
+  const answersRef = useRef<Record<string, string>>({});
+  answersRef.current = answers;
 
   useEffect(() => {
     if (!id) return;
@@ -35,30 +39,34 @@ export const QuizPlayer: React.FC = () => {
     loadQuiz();
   }, [id]);
 
+  // Clean timer with fixed tick that does not re-create interval every second
   useEffect(() => {
-    if (attemptResult || timeLeft <= 0) return;
+    if (isLoading || !quiz || attemptResult) return;
+
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          handleSubmit();
+          handleSubmit(answersRef.current);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
+
     return () => clearInterval(timer);
-  }, [timeLeft, attemptResult]);
+  }, [isLoading, !!quiz, !!attemptResult]);
 
   const handleSelectOption = (questionId: string, optionValue: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: optionValue }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (submitAnswers?: Record<string, string>) => {
     if (!id || isSubmitting) return;
+    const finalAnswers = submitAnswers || answersRef.current;
     setIsSubmitting(true);
     try {
-      const res = await api.submitQuiz(id, answers);
+      const res = await api.submitQuiz(id, finalAnswers);
       setAttemptResult(res);
     } catch (err: any) {
       alert(err.message || 'Gagal mengumpulkan jawaban ujian');
@@ -89,26 +97,26 @@ export const QuizPlayer: React.FC = () => {
   if (attemptResult) {
     return (
       <div className="max-w-2xl mx-auto py-12 space-y-6 animate-in fade-in">
-        <div className="glass-panel p-8 rounded-3xl border border-slate-800 text-center space-y-6">
-          <div className="w-20 h-20 rounded-full bg-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center border border-emerald-500/30">
+        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl text-center space-y-6">
+          <div className="w-20 h-20 rounded-full bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center border border-emerald-200">
             <Award className="w-10 h-10" />
           </div>
 
           <div className="space-y-2">
-            <h1 className="text-2xl font-extrabold text-white">Ujian Berhasil Dikumpulkan!</h1>
-            <p className="text-slate-400 text-sm">Hasil evaluasi otomatis oleh mesin penilaian Go Gin Backend</p>
+            <h1 className="text-2xl font-extrabold text-slate-900">Ujian Berhasil Dikumpulkan!</h1>
+            <p className="text-slate-500 text-sm">Hasil evaluasi otomatis oleh mesin penilaian Go Gin Backend</p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
-            <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Nilai Akhir Anda</span>
-            <div className="text-5xl font-extrabold text-emerald-400">
-              {attemptResult.score} <span className="text-2xl text-slate-500">/ {attemptResult.total || 100}</span>
+          <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+            <span className="text-xs uppercase font-bold text-slate-500 tracking-wider">Nilai Akhir Anda</span>
+            <div className="text-5xl font-black text-emerald-600">
+              {attemptResult.score} <span className="text-2xl text-slate-400">/ {attemptResult.total || 100}</span>
             </div>
           </div>
 
           <button
             onClick={() => navigate(`/classes/${quiz.class_id}`)}
-            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg transition-colors cursor-pointer"
+            className="px-6 py-3 bg-[#1e1b4b] hover:bg-slate-900 text-white font-bold rounded-xl shadow-md shadow-indigo-100 transition-colors cursor-pointer"
           >
             Kembali ke Ruang Kelas
           </button>
@@ -119,12 +127,12 @@ export const QuizPlayer: React.FC = () => {
 
   if (questions.length === 0) {
     return (
-      <div className="max-w-2xl mx-auto py-12 glass-panel p-8 rounded-3xl border border-slate-800 text-center space-y-4">
-        <h2 className="text-xl font-bold text-white">Belum Ada Soal di Ujian Ini</h2>
-        <p className="text-sm text-slate-400">Guru belum menambahkan butir soal untuk kuis ini.</p>
+      <div className="max-w-2xl mx-auto py-12 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm text-center space-y-4">
+        <h2 className="text-xl font-bold text-slate-900">Belum Ada Soal di Ujian Ini</h2>
+        <p className="text-sm text-slate-500">Guru belum menambahkan butir soal untuk kuis ini.</p>
         <button
           onClick={() => navigate(`/classes/${quiz.class_id}`)}
-          className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl cursor-pointer"
+          className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl cursor-pointer"
         >
           Kembali ke Kelas
         </button>
@@ -155,22 +163,22 @@ export const QuizPlayer: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in">
       {/* Quiz Top Bar */}
-      <div className="glass-panel p-5 rounded-3xl border border-slate-800 flex items-center justify-between">
+      <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
         <div>
-          <h1 className="text-base font-bold text-white line-clamp-1">{quiz.title}</h1>
-          <p className="text-xs text-slate-400">Soal {currentIdx + 1} dari {questions.length}</p>
+          <h1 className="text-base font-bold text-slate-900 line-clamp-1">{quiz.title}</h1>
+          <p className="text-xs text-slate-500">Soal {currentIdx + 1} dari {questions.length}</p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono font-bold text-sm">
-            <Clock className="w-4 h-4 text-amber-400 animate-pulse" />
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 font-mono font-bold text-sm">
+            <Clock className="w-4 h-4 text-amber-600 animate-pulse" />
             {formatTime(timeLeft)}
           </div>
 
           <button
-            onClick={handleSubmit}
+            onClick={() => handleSubmit()}
             disabled={isSubmitting}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-lg shadow-emerald-600/30 transition-colors cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-md shadow-emerald-100 transition-colors cursor-pointer disabled:opacity-50"
           >
             <Send className="w-3.5 h-3.5" /> Selesaikan Ujian
           </button>
@@ -179,15 +187,15 @@ export const QuizPlayer: React.FC = () => {
 
       {/* Main Question Card */}
       {currentQ && (
-        <div className="glass-panel p-8 rounded-3xl border border-slate-800 space-y-6">
+        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
           {/* Question Text */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">
+              <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
                 Pertanyaan #{currentIdx + 1} ({currentQ.points || 10} Poin)
               </span>
             </div>
-            <p className="text-base font-semibold text-slate-100 leading-relaxed">
+            <p className="text-base font-bold text-slate-900 leading-relaxed">
               {currentQ.question_text}
             </p>
           </div>
@@ -204,13 +212,13 @@ export const QuizPlayer: React.FC = () => {
                   onClick={() => handleSelectOption(qKey, opt.value)}
                   className={`w-full p-4 rounded-2xl border text-left transition-all flex items-center gap-4 cursor-pointer ${
                     isSelected
-                      ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-lg shadow-indigo-500/10'
-                      : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-800/60 hover:border-slate-700'
+                      ? 'bg-indigo-50/80 border-indigo-300 text-indigo-950 font-semibold ring-1 ring-indigo-200 shadow-xs'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
                   }`}
                 >
                   <div
                     className={`w-7 h-7 rounded-xl font-bold flex items-center justify-center text-xs shrink-0 ${
-                      isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'
+                      isSelected ? 'bg-[#1e1b4b] text-white' : 'bg-white border border-slate-200 text-slate-600'
                     }`}
                   >
                     {opt.label}
@@ -222,11 +230,11 @@ export const QuizPlayer: React.FC = () => {
           </div>
 
           {/* Bottom Pagination Buttons */}
-          <div className="pt-6 border-t border-slate-800 flex items-center justify-between">
+          <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
             <button
               onClick={() => setCurrentIdx((prev) => Math.max(0, prev - 1))}
               disabled={currentIdx === 0}
-              className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-semibold text-xs flex items-center gap-1.5 disabled:opacity-30 cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200 text-slate-700 font-semibold text-xs flex items-center gap-1.5 disabled:opacity-30 cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" /> Soal Sebelumnya
             </button>
@@ -234,15 +242,15 @@ export const QuizPlayer: React.FC = () => {
             {currentIdx < questions.length - 1 ? (
               <button
                 onClick={() => setCurrentIdx((prev) => Math.min(questions.length - 1, prev + 1))}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-indigo-600/30 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-[#1e1b4b] hover:bg-slate-900 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-indigo-100 cursor-pointer"
               >
                 Soal Berikutnya <ChevronRight className="w-4 h-4" />
               </button>
             ) : (
               <button
-                onClick={handleSubmit}
+                onClick={() => handleSubmit()}
                 disabled={isSubmitting}
-                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-600/30 cursor-pointer disabled:opacity-50"
+                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-100 cursor-pointer disabled:opacity-50"
               >
                 <Send className="w-4 h-4" /> Selesai & Kirim Ujian
               </button>
@@ -252,8 +260,8 @@ export const QuizPlayer: React.FC = () => {
       )}
 
       {/* Number Navigation Map */}
-      <div className="glass-panel p-5 rounded-3xl border border-slate-800 space-y-3">
-        <span className="text-xs font-bold uppercase text-slate-400 tracking-wider">Navigasi Nomor Soal</span>
+      <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-3">
+        <span className="text-xs font-bold uppercase text-slate-500 tracking-wider">Navigasi Nomor Soal</span>
         <div className="flex flex-wrap gap-2">
           {questions.map((q, idx) => {
             const key = q.id || String(idx);
@@ -265,10 +273,10 @@ export const QuizPlayer: React.FC = () => {
                 onClick={() => setCurrentIdx(idx)}
                 className={`w-9 h-9 rounded-xl font-bold text-xs transition-all cursor-pointer ${
                   isCurrent
-                    ? 'ring-2 ring-indigo-400 bg-indigo-600 text-white'
+                    ? 'ring-2 ring-indigo-400 bg-[#1e1b4b] text-white shadow-xs'
                     : isAnswered
-                    ? 'bg-emerald-600/30 text-emerald-300 border border-emerald-500/30'
-                    : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                 }`}
               >
                 {idx + 1}

@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 const PORT = parseInt(process.env.PORT || '3002', 10);
 const DIST_DIR = path.join(__dirname, 'dist');
-const BACKEND_TARGET = 'http://127.0.0.1:3001';
+const BACKEND_TARGET = process.env.BACKEND_TARGET || process.env.VITE_API_TARGET || 'https://api-lms.smkalazharsempu.sch.id';
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',

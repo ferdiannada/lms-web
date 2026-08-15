@@ -14,9 +14,14 @@ import {
   GradebookEntry,
   GradeHistoryItem,
   DashboardSummary,
+  AppNotification,
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+
+// In-Memory Cache Store for fast UI rendering
+let _classesCache: { data: ClassRoom[]; timestamp: number } | null = null;
+let _rombelsCache: { data: Rombel[]; timestamp: number } | null = null;
 
 // Token Management
 export const getToken = (): string | null => localStorage.getItem('pedia_token');
@@ -223,15 +228,26 @@ function normalizeQuiz(raw: any): Quiz {
   };
 }
 
-function normalizeForumPost(raw: any): ForumPost {
+export const getWsUrl = (path: string): string => {
+  const base = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+  if (base.startsWith('/')) {
+    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${proto}//${window.location.host}${base}${path}`;
+  }
+  const proto = base.startsWith('https:') ? 'wss:' : 'ws:';
+  const cleanBase = base.replace(/^https?:\/\//, '');
+  return `${proto}//${cleanBase}${path}`;
+};
+
+export function normalizeForumPost(raw: any): ForumPost {
   if (!raw) return {} as ForumPost;
   const user = raw.user || {};
   const rawComments = Array.isArray(raw.comments) ? raw.comments : [];
   return {
     id: raw.id,
     class_id: raw.class_id,
-    user_id: raw.user_id,
-    user_name: user.name || raw.user_name || 'Pengguna',
+    user_id: raw.user_id || user.id || raw.author_id || '',
+    user_name: user.name || raw.user_name || raw.author_name || 'Pengguna',
     user_role: user.role || raw.user_role || 'siswa',
     user_avatar: user.avatar_url || raw.user_avatar || '',
     title: raw.title || '',
@@ -249,14 +265,14 @@ function normalizeForumPost(raw: any): ForumPost {
   };
 }
 
-function normalizeForumComment(raw: any): ForumComment {
+export function normalizeForumComment(raw: any): ForumComment {
   if (!raw) return {} as ForumComment;
   const user = raw.user || {};
   return {
     id: raw.id,
     post_id: raw.post_id,
-    user_id: raw.user_id,
-    user_name: user.name || raw.user_name || 'Pengguna',
+    user_id: raw.user_id || user.id || raw.author_id || '',
+    user_name: user.name || raw.user_name || raw.author_name || 'Pengguna',
     user_role: user.role || raw.user_role || 'siswa',
     user_avatar: user.avatar_url || raw.user_avatar || '',
     content: raw.content || '',
@@ -267,6 +283,9 @@ function normalizeForumComment(raw: any): ForumComment {
     updated_at: raw.updated_at,
   };
 }
+
+// In-Flight GET request deduplication map
+const _inFlightRequests = new Map<string, Promise<any>>();
 
 // Generic HTTP fetch helper
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -281,37 +300,80 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 
   const url = `${API_BASE}${endpoint}`;
+  const isGet = !options.method || options.method.toUpperCase() === 'GET';
 
-  try {
-    const res = await fetch(url, {
-      ...options,
-      headers,
-    });
-
-    if (res.status === 401) {
-      removeToken();
-      localStorage.removeItem('pedia_user');
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
-      }
-      throw new Error('Sesi telah berakhir. Silakan login kembali.');
+  // Deduplicate in-flight GET requests if no custom signal or body
+  if (isGet && !options.signal) {
+    const existing = _inFlightRequests.get(url);
+    if (existing) {
+      return existing as Promise<T>;
     }
-
-    if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      throw new Error(errJson.error || errJson.message || `HTTP Error ${res.status}`);
-    }
-
-    // Return empty object for 204 No Content
-    if (res.status === 204) {
-      return {} as T;
-    }
-
-    return await res.json();
-  } catch (err: any) {
-    console.warn(`[API] Error on ${endpoint}:`, err.message);
-    throw err;
   }
+
+  const fetchPromise = (async () => {
+    try {
+      const res = await fetch(url, {
+        ...options,
+        headers,
+      });
+
+      if (res.status === 401) {
+        removeToken();
+        localStorage.removeItem('pedia_user');
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+        throw new Error('Sesi telah berakhir. Silakan login kembali.');
+      }
+
+      const contentType = res.headers.get('content-type') || '';
+      const text = await res.text();
+
+      if (!contentType.includes('application/json')) {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: Gagal menghubungi backend API.`);
+        }
+        throw new Error(
+          `Backend API mengembalikan respon non-JSON (HTML). Pastikan backend server API berjalan dan port tidak bertabrakan dengan aplikasi lain.`
+        );
+      }
+
+      let data: any;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error('Format respon dari server bukan JSON yang valid.');
+      }
+
+      if (!res.ok) {
+        throw new Error(data.error || data.message || `HTTP Error ${res.status}`);
+      }
+
+      // Return empty object for 204 No Content
+      if (res.status === 204) {
+        return {} as T;
+      }
+
+      return data as T;
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        // Silent on intentional cancellation
+        throw err;
+      }
+      console.warn(`[API] Error on ${endpoint}:`, err.message);
+      throw err;
+    } finally {
+      if (isGet) {
+        _inFlightRequests.delete(url);
+      }
+    }
+  })();
+
+  if (isGet && !options.signal) {
+    _inFlightRequests.set(url, fetchPromise);
+  }
+
+  return fetchPromise;
 }
 
 // API Functions connecting to Go Gin Backend & PostgreSQL
@@ -365,9 +427,32 @@ export const api = {
   },
 
   // ── Classes & Rombels ────────────────────────────────────────────────
-  async getClasses(): Promise<ClassRoom[]> {
+  getCachedClasses(): ClassRoom[] | null {
+    if (_classesCache && Date.now() - _classesCache.timestamp < 120000) {
+      return _classesCache.data;
+    }
+    try {
+      const stored = sessionStorage.getItem('pedia_classes_cache');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return null;
+  },
+
+  async getClasses(forceRefresh: boolean = false): Promise<ClassRoom[]> {
+    if (!forceRefresh && _classesCache && Date.now() - _classesCache.timestamp < 60000) {
+      return _classesCache.data;
+    }
+
     const raw = await request<any[]>('/classes');
-    return Array.isArray(raw) ? raw.map(normalizeClass) : [];
+    const data = Array.isArray(raw) ? raw.map(normalizeClass) : [];
+    _classesCache = { data, timestamp: Date.now() };
+    try {
+      sessionStorage.setItem('pedia_classes_cache', JSON.stringify(data));
+    } catch {}
+    return data;
   },
 
   async getClassDetail(id: string): Promise<ClassRoom> {
@@ -375,12 +460,21 @@ export const api = {
     return normalizeClass(raw);
   },
 
-  async getRombels(): Promise<Rombel[]> {
+  async getRombels(forceRefresh: boolean = false): Promise<Rombel[]> {
+    if (!forceRefresh && _rombelsCache && Date.now() - _rombelsCache.timestamp < 300000) {
+      return _rombelsCache.data;
+    }
     const raw = await request<Rombel[]>('/classes/rombels');
-    return Array.isArray(raw) ? raw : [];
+    const data = Array.isArray(raw) ? raw : [];
+    _rombelsCache = { data, timestamp: Date.now() };
+    return data;
   },
 
   async createClass(data: { name: string; description?: string; rombel_id: string; cover_color?: string }): Promise<ClassRoom> {
+    _classesCache = null;
+    try {
+      sessionStorage.removeItem('pedia_classes_cache');
+    } catch {}
     const raw = await request<any>('/classes', {
       method: 'POST',
       body: JSON.stringify({
@@ -394,6 +488,10 @@ export const api = {
   },
 
   async joinClass(code: string): Promise<ClassRoom> {
+    _classesCache = null;
+    try {
+      sessionStorage.removeItem('pedia_classes_cache');
+    } catch {}
     const res = await request<{ message: string; class: any }>('/classes/join', {
       method: 'POST',
       body: JSON.stringify({ class_code: code.trim().toUpperCase() }),
@@ -401,8 +499,8 @@ export const api = {
     return normalizeClass(res.class);
   },
 
-  async getClassMembers(classId: string): Promise<ClassMember[]> {
-    const raw = await request<any[]>(`/classes/${classId}/members`);
+  async getClassMembers(classId: string, options?: RequestInit): Promise<ClassMember[]> {
+    const raw = await request<any[]>(`/classes/${classId}/members`, options);
     if (!Array.isArray(raw)) return [];
     return raw.map((u) => ({
       id: u.id,
@@ -419,13 +517,13 @@ export const api = {
   },
 
   // ── Materials ────────────────────────────────────────────────────────
-  async getMaterials(classId: string): Promise<Material[]> {
-    const raw = await request<any[]>(`/classes/${classId}/materials`);
+  async getMaterials(classId: string, options?: RequestInit): Promise<Material[]> {
+    const raw = await request<any[]>(`/classes/${classId}/materials`, options);
     return Array.isArray(raw) ? raw.map(normalizeMaterial) : [];
   },
 
-  async getMaterialDetail(id: string): Promise<Material> {
-    const raw = await request<any>(`/materials/${id}`);
+  async getMaterialDetail(id: string, options?: RequestInit): Promise<Material> {
+    const raw = await request<any>(`/materials/${id}`, options);
     return normalizeMaterial(raw);
   },
 
@@ -448,13 +546,13 @@ export const api = {
   },
 
   // ── Assignments & Submissions ─────────────────────────────────────────
-  async getAssignments(classId: string): Promise<Assignment[]> {
-    const raw = await request<any[]>(`/classes/${classId}/assignments`);
+  async getAssignments(classId: string, options?: RequestInit): Promise<Assignment[]> {
+    const raw = await request<any[]>(`/classes/${classId}/assignments`, options);
     return Array.isArray(raw) ? raw.map(normalizeAssignment) : [];
   },
 
-  async getAssignmentDetail(id: string): Promise<Assignment> {
-    const raw = await request<any>(`/assignments/${id}`);
+  async getAssignmentDetail(id: string, options?: RequestInit): Promise<Assignment> {
+    const raw = await request<any>(`/assignments/${id}`, options);
     return normalizeAssignment(raw);
   },
 
@@ -472,25 +570,30 @@ export const api = {
     return normalizeAssignment(raw);
   },
 
-  async submitAssignment(assignmentId: string, data: { answer_text?: string; notes?: string; file_url?: string }): Promise<Submission> {
+  async submitAssignment(assignmentId: string, data: { answer_text?: string; notes?: string; file_url?: string; file_name?: string }): Promise<Submission> {
     const raw = await request<any>(`/assignments/${assignmentId}/submit`, {
       method: 'POST',
       body: JSON.stringify({
         answer_text: data.notes || data.answer_text || '',
         file_url: data.file_url || '',
+        file_name: data.file_name || '',
       }),
     });
     return normalizeSubmission(raw);
   },
 
-  async getSubmissions(assignmentId: string): Promise<Submission[]> {
-    const raw = await request<any[]>(`/assignments/${assignmentId}/submissions`);
+  async deleteAssignment(assignmentId: string): Promise<void> {
+    await request(`/assignments/${assignmentId}`, { method: 'DELETE' });
+  },
+
+  async getSubmissions(assignmentId: string, options?: RequestInit): Promise<Submission[]> {
+    const raw = await request<any[]>(`/assignments/${assignmentId}/submissions`, options);
     return Array.isArray(raw) ? raw.map(normalizeSubmission) : [];
   },
 
-  async getMySubmission(assignmentId: string): Promise<Submission | null> {
+  async getMySubmission(assignmentId: string, options?: RequestInit): Promise<Submission | null> {
     try {
-      const raw = await request<any>(`/assignments/${assignmentId}/submission`);
+      const raw = await request<any>(`/assignments/${assignmentId}/submission`, options);
       return normalizeSubmission(raw);
     } catch {
       return null;
@@ -505,14 +608,18 @@ export const api = {
   },
 
   // ── Quizzes & Exam Player ────────────────────────────────────────────
-  async getQuizzes(classId: string): Promise<Quiz[]> {
-    const raw = await request<any[]>(`/classes/${classId}/quizzes`);
+  async getQuizzes(classId: string, options?: RequestInit): Promise<Quiz[]> {
+    const raw = await request<any[]>(`/classes/${classId}/quizzes`, options);
     return Array.isArray(raw) ? raw.map(normalizeQuiz) : [];
   },
 
   async getQuizDetail(id: string): Promise<Quiz> {
     const raw = await request<any>(`/quizzes/${id}`);
     return normalizeQuiz(raw);
+  },
+
+  async deleteQuiz(quizId: string): Promise<void> {
+    await request(`/quizzes/${quizId}`, { method: 'DELETE' });
   },
 
   async createQuiz(classId: string, data: Partial<Quiz>): Promise<Quiz> {
@@ -594,9 +701,32 @@ export const api = {
   },
 
   // ── Forum & Comments ─────────────────────────────────────────────────
-  async getForumPosts(classId: string): Promise<ForumPost[]> {
-    const raw = await request<any[]>(`/classes/${classId}/forum`);
-    return Array.isArray(raw) ? raw.map(normalizeForumPost) : [];
+  async getForumPosts(classId: string, options?: RequestInit): Promise<ForumPost[]> {
+    const raw = await request<any[]>(`/classes/${classId}/forum`, options);
+    if (!Array.isArray(raw)) return [];
+
+    // Map posts and fetch their respective comments in parallel
+    const posts = await Promise.all(
+      raw.map(async (rawPost) => {
+        const post = normalizeForumPost(rawPost);
+        // If raw already has comments, keep them
+        if (rawPost.comments && Array.isArray(rawPost.comments) && rawPost.comments.length > 0) {
+          return post;
+        }
+        try {
+          const res = await request<any>(`/forum/posts/${post.id}/comments?limit=100`, options);
+          const list = Array.isArray(res)
+            ? res
+            : (res?.items && Array.isArray(res.items) ? res.items : []);
+          post.comments = list.map(normalizeForumComment);
+        } catch {
+          post.comments = [];
+        }
+        return post;
+      })
+    );
+
+    return posts;
   },
 
   async createForumPost(classId: string, content: string, title?: string): Promise<ForumPost> {
@@ -607,9 +737,28 @@ export const api = {
     return normalizeForumPost(raw);
   },
 
-  async getComments(postId: string): Promise<ForumComment[]> {
-    const raw = await request<any[]>(`/forum/posts/${postId}/comments`);
-    return Array.isArray(raw) ? raw.map(normalizeForumComment) : [];
+  async updateForumPost(postId: string, content: string): Promise<ForumPost> {
+    const raw = await request<any>(`/forum/posts/${postId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ content }),
+    });
+    return normalizeForumPost(raw);
+  },
+
+  async deleteForumPost(postId: string): Promise<void> {
+    await request(`/forum/posts/${postId}`, { method: 'DELETE' });
+  },
+
+  async togglePinPost(postId: string): Promise<any> {
+    return await request(`/forum/posts/${postId}/pin`, { method: 'POST' });
+  },
+
+  async getComments(postId: string, options?: RequestInit): Promise<ForumComment[]> {
+    const raw = await request<any>(`/forum/posts/${postId}/comments?limit=100`, options);
+    const list = Array.isArray(raw)
+      ? raw
+      : (raw?.items && Array.isArray(raw.items) ? raw.items : []);
+    return list.map(normalizeForumComment);
   },
 
   async addComment(postId: string, content: string, parentId?: string): Promise<ForumComment> {
@@ -618,6 +767,30 @@ export const api = {
       body: JSON.stringify({ content, parent_id: parentId }),
     });
     return normalizeForumComment(raw);
+  },
+
+  async updateComment(postId: string, commentId: string, content: string): Promise<ForumComment> {
+    try {
+      const raw = await request<any>(`/forum/posts/${postId}/comments/${commentId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ content }),
+      });
+      return normalizeForumComment(raw);
+    } catch {
+      const raw = await request<any>(`/forum/comments/${commentId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ content }),
+      });
+      return normalizeForumComment(raw);
+    }
+  },
+
+  async deleteComment(postId: string, commentId: string): Promise<void> {
+    try {
+      await request(`/forum/posts/${postId}/comments/${commentId}`, { method: 'DELETE' });
+    } catch {
+      await request(`/forum/comments/${commentId}`, { method: 'DELETE' });
+    }
   },
 
   async toggleReaction(targetType: 'post' | 'comment', targetId: string, emoji: string, classId?: string): Promise<any> {
@@ -704,11 +877,66 @@ export const api = {
       body: formData,
     });
 
-    if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      throw new Error(errJson.error || `Upload gagal (HTTP ${res.status})`);
+    const contentType = res.headers.get('content-type') || '';
+    const text = await res.text();
+
+    let data: any = {};
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      // not JSON
     }
 
-    return await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || data.message || `Upload gagal (HTTP ${res.status})`);
+    }
+
+    if (!contentType.includes('application/json')) {
+      throw new Error(`Upload gagal: respon server non-JSON.`);
+    }
+
+    return data;
+  },
+
+  // ── Notifications ────────────────────────────────────────────────────
+  async getNotifications(page: number = 1, limit: number = 20): Promise<AppNotification[]> {
+    try {
+      const raw = await request<any>(`/notifications?page=${page}&limit=${limit}`);
+      if (Array.isArray(raw)) return raw;
+      if (raw && Array.isArray(raw.notifications)) return raw.notifications;
+      if (raw && Array.isArray(raw.data)) return raw.data;
+      return [];
+    } catch (err) {
+      console.warn('[API] Failed to fetch notifications:', err);
+      return [];
+    }
+  },
+
+  async getUnreadNotificationCount(): Promise<number> {
+    try {
+      const res = await request<any>('/notifications/unread-count');
+      if (typeof res === 'number') return res;
+      if (res && typeof res.count === 'number') return res.count;
+      if (res && typeof res.unread_count === 'number') return res.unread_count;
+      return 0;
+    } catch {
+      return 0;
+    }
+  },
+
+  async markNotificationRead(id: string): Promise<void> {
+    try {
+      await request(`/notifications/${id}/read`, { method: 'POST' });
+    } catch (err) {
+      console.warn(`[API] Failed to mark notification ${id} as read:`, err);
+    }
+  },
+
+  async markAllNotificationsRead(): Promise<void> {
+    try {
+      await request('/notifications/read-all', { method: 'POST' });
+    } catch (err) {
+      console.warn('[API] Failed to mark all notifications as read:', err);
+    }
   },
 };

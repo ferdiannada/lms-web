@@ -17,3 +17,6 @@ dist/
 
 # TypeScript
 *.tsbuildinfo
+
+# Tooling Cache
+.playwright-mcp/
