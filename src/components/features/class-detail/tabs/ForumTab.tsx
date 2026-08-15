@@ -1,5 +1,6 @@
-import React from 'react';
-import { ForumPost, ForumComment, User } from '../../../../types';
+import React, { useState } from 'react';
+import { ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
+import { ForumPost, User } from '../../../../types';
 import { ForumPostComposer } from '../../forum/ForumPostComposer';
 import { ForumPostCard } from '../../forum/ForumPostCard';
 
@@ -28,6 +29,13 @@ export const ForumTab: React.FC<ForumTabProps> = ({
   onSaveEditComment,
   onDeleteComment,
 }) => {
+  const [showAllPosts, setShowAllPosts] = useState(false);
+  const POST_LIMIT = 5;
+
+  const displayedPosts = showAllPosts || posts.length <= POST_LIMIT
+    ? posts
+    : posts.slice(0, POST_LIMIT);
+
   return (
     <div className="space-y-6">
       <ForumPostComposer onSubmit={onCreatePost} />
@@ -38,7 +46,7 @@ export const ForumTab: React.FC<ForumTabProps> = ({
         </div>
       ) : (
         <div className="space-y-4">
-          {posts.map((post) => (
+          {displayedPosts.map((post) => (
             <ForumPostCard
               key={post.id}
               post={post}
@@ -52,6 +60,30 @@ export const ForumTab: React.FC<ForumTabProps> = ({
               onDeleteComment={onDeleteComment}
             />
           ))}
+
+          {/* Toggle Show All Posts Button */}
+          {posts.length > POST_LIMIT && (
+            <div className="text-center pt-2">
+              <button
+                type="button"
+                onClick={() => setShowAllPosts(!showAllPosts)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 shadow-xs transition-all cursor-pointer hover:border-indigo-200"
+              >
+                <MessageSquare className="w-4 h-4 text-indigo-600" />
+                {showAllPosts ? (
+                  <>
+                    <span>Tampilkan Lebih Ringkas (5 Teratas)</span>
+                    <ChevronUp className="w-4 h-4 text-slate-400" />
+                  </>
+                ) : (
+                  <>
+                    <span>Lihat Semua Diskusi Kelas ({posts.length} Postingan)</span>
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -7,6 +7,8 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  ShieldCheck,
+  GraduationCap,
 } from 'lucide-react';
 import { ForumComment, User } from '../../../types';
 
@@ -41,6 +43,7 @@ interface ForumCommentTreeProps {
   comments: ForumComment[];
   user: User | null;
   isTeacher: boolean;
+  showAll?: boolean;
   onSetReply: (postId: string, comment: ForumComment | null) => void;
   onSaveEditComment: (postId: string, commentId: string, text: string) => Promise<void>;
   onDeleteComment: (postId: string, commentId: string) => Promise<void>;
@@ -51,6 +54,7 @@ export const ForumCommentTree: React.FC<ForumCommentTreeProps> = ({
   comments,
   user,
   isTeacher,
+  showAll = true,
   onSetReply,
   onSaveEditComment,
   onDeleteComment,
@@ -59,14 +63,25 @@ export const ForumCommentTree: React.FC<ForumCommentTreeProps> = ({
   const [editCommentText, setEditCommentText] = useState('');
   const [isSavingComment, setIsSavingComment] = useState(false);
   const [collapsedThreads, setCollapsedThreads] = useState<Record<string, boolean>>({});
+  const [expandedTextIds, setExpandedTextIds] = useState<Record<string, boolean>>({});
 
-  const commentNodes = buildCommentTree(comments);
-  if (commentNodes.length === 0) return null;
+  const allCommentNodes = buildCommentTree(comments);
+  if (allCommentNodes.length === 0) return null;
+
+  // Truncate visible root comments unless showAll is true
+  const displayedNodes = showAll ? allCommentNodes : allCommentNodes.slice(0, 2);
 
   const toggleThread = (commentId: string) => {
     setCollapsedThreads((prev) => ({
       ...prev,
       [commentId]: !prev[commentId],
+    }));
+  };
+
+  const toggleExpandText = (id: string) => {
+    setExpandedTextIds((prev) => ({
+      ...prev,
+      [id]: !prev[id],
     }));
   };
 
@@ -94,33 +109,62 @@ export const ForumCommentTree: React.FC<ForumCommentTreeProps> = ({
 
   return (
     <div className="space-y-3">
-      {commentNodes.map((node) => {
+      {displayedNodes.map((node) => {
         const comment = node.comment;
         const isCommentAuthor = user?.id === comment.user_id;
         const canManageComment = isCommentAuthor || isTeacher;
         const isEditingThisComment = editingCommentId === comment.id;
         const hasReplies = node.replies.length > 0;
         const isCollapsed = !!collapsedThreads[comment.id];
+        const isTextExpanded = !!expandedTextIds[comment.id];
+        const isCommentLong = comment.content.length > 180 || comment.content.split('\n').length > 3;
+        const isTeacherRole = comment.user_role === 'guru' || comment.user_role === 'admin';
 
         return (
-          <div key={comment.id} className="space-y-2">
-            {/* Root Comment Card */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 group">
+          <div key={comment.id} className="space-y-2.5">
+            {/* Root Comment Bubble */}
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/80 hover:bg-slate-50 border border-slate-200/90 shadow-2xs space-y-2 group transition-all">
               <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-slate-900">{comment.user_name}</span>
-                  <span
-                    className={`text-[9px] px-2 py-0.5 rounded-full font-semibold uppercase ${
-                      comment.user_role === 'guru'
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div
+                    className={`w-7 h-7 rounded-xl font-bold flex items-center justify-center text-[11px] shrink-0 text-white ${
+                      isTeacherRole
+                        ? 'bg-gradient-to-tr from-emerald-600 to-teal-600'
+                        : 'bg-gradient-to-tr from-[#1e1b4b] to-indigo-600'
                     }`}
                   >
-                    {comment.user_role}
-                  </span>
+                    {comment.user_name.charAt(0).toUpperCase()}
+                  </div>
+
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span
+                      className={`truncate font-bold ${
+                        isCommentAuthor ? 'text-indigo-900 font-extrabold' : 'text-slate-900'
+                      }`}
+                    >
+                      {isCommentAuthor ? 'Anda' : comment.user_name}
+                    </span>
+                    <span
+                      className={`text-[9px] px-2 py-0.2 rounded-full font-semibold uppercase flex items-center gap-0.5 ${
+                        isTeacherRole
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                      }`}
+                    >
+                      {isTeacherRole ? (
+                        <>
+                          <ShieldCheck className="w-2.5 h-2.5 text-emerald-600" /> Guru
+                        </>
+                      ) : (
+                        <>
+                          <GraduationCap className="w-2.5 h-2.5 text-indigo-600" /> Siswa
+                        </>
+                      )}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <span className="text-[10px] text-slate-400">
                     {new Date(comment.created_at).toLocaleTimeString('id-ID', {
                       hour: '2-digit',
@@ -134,10 +178,10 @@ export const ForumCommentTree: React.FC<ForumCommentTreeProps> = ({
                         type="button"
                         onClick={() => onSetReply(postId, comment)}
                         title="Balas Komentar"
-                        className="p-1 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer flex items-center gap-1 text-[11px]"
+                        className="px-2 py-1 rounded-lg text-slate-500 hover:text-indigo-700 hover:bg-indigo-50 font-semibold transition-colors cursor-pointer flex items-center gap-1 text-[11px]"
                       >
                         <CornerDownRight className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Balas</span>
+                        <span>Balas</span>
                       </button>
 
                       {isCommentAuthor && (
@@ -193,24 +237,39 @@ export const ForumCommentTree: React.FC<ForumCommentTreeProps> = ({
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">
-                  {comment.content}
-                </p>
+                <div className="space-y-1">
+                  <p
+                    className={`text-xs text-slate-700 leading-relaxed whitespace-pre-wrap ${
+                      !isTextExpanded && isCommentLong ? 'line-clamp-2' : ''
+                    }`}
+                  >
+                    {comment.content}
+                  </p>
+                  {isCommentLong && (
+                    <button
+                      type="button"
+                      onClick={() => toggleExpandText(comment.id)}
+                      className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
+                    >
+                      {isTextExpanded ? 'Sembunyikan' : 'Baca Selengkapnya'}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
 
-            {/* Replies Section */}
+            {/* Nested Replies Section with Connector Bar */}
             {hasReplies && (
               <div className="ml-3 sm:ml-6 space-y-2">
                 <button
                   type="button"
                   onClick={() => toggleThread(comment.id)}
-                  className="flex items-center gap-1.5 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors py-0.5 px-2 rounded-lg hover:bg-indigo-50 cursor-pointer"
+                  className="flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors py-1 px-2.5 rounded-xl hover:bg-indigo-50 cursor-pointer"
                 >
                   {isCollapsed ? (
                     <>
                       <ChevronDown className="w-3.5 h-3.5" />
-                      Lihat {node.replies.length} Balasan
+                      Lihat {node.replies.length} Balasan Diskusi
                     </>
                   ) : (
                     <>
@@ -221,35 +280,53 @@ export const ForumCommentTree: React.FC<ForumCommentTreeProps> = ({
                 </button>
 
                 {!isCollapsed && (
-                  <div className="space-y-2 border-l-2 border-indigo-200 pl-3 sm:pl-4">
+                  <div className="space-y-2 border-l-2 border-indigo-200/80 pl-3 sm:pl-4">
                     {node.replies.map((reply) => {
                       const isReplyAuthor = user?.id === reply.user_id;
                       const canManageReply = isReplyAuthor || isTeacher;
                       const isEditingThisReply = editingCommentId === reply.id;
+                      const isReplyExpanded = !!expandedTextIds[reply.id];
+                      const isReplyLong = reply.content.length > 150 || reply.content.split('\n').length > 3;
+                      const isReplyTeacher = reply.user_role === 'guru' || reply.user_role === 'admin';
 
                       return (
                         <div
                           key={reply.id}
-                          className="p-3 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1.5 group"
+                          className="p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-1.5 group hover:border-slate-300 transition-all"
                         >
                           <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-900">{reply.user_name}</span>
-                              <span
-                                className={`text-[9px] px-2 py-0.5 rounded-full font-semibold uppercase ${
-                                  reply.user_role === 'guru'
-                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                    : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div
+                                className={`w-6 h-6 rounded-lg font-bold flex items-center justify-center text-[10px] shrink-0 text-white ${
+                                  isReplyTeacher
+                                    ? 'bg-gradient-to-tr from-emerald-600 to-teal-600'
+                                    : 'bg-gradient-to-tr from-[#1e1b4b] to-indigo-600'
                                 }`}
                               >
-                                {reply.user_role}
-                              </span>
-                              <span className="text-[10px] text-indigo-600 font-medium hidden sm:flex items-center gap-0.5">
-                                <CornerDownRight className="w-2.5 h-2.5" /> membalas
-                              </span>
+                                {reply.user_name.charAt(0).toUpperCase()}
+                              </div>
+
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span
+                                  className={`truncate font-bold ${
+                                    isReplyAuthor ? 'text-indigo-900 font-extrabold' : 'text-slate-900'
+                                  }`}
+                                >
+                                  {isReplyAuthor ? 'Anda' : reply.user_name}
+                                </span>
+                                <span
+                                  className={`text-[8px] px-1.5 py-0.2 rounded-full font-semibold uppercase ${
+                                    isReplyTeacher
+                                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                      : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                  }`}
+                                >
+                                  {reply.user_role}
+                                </span>
+                              </div>
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 shrink-0">
                               <span className="text-[10px] text-slate-400">
                                 {new Date(reply.created_at).toLocaleTimeString('id-ID', {
                                   hour: '2-digit',
@@ -321,9 +398,24 @@ export const ForumCommentTree: React.FC<ForumCommentTreeProps> = ({
                               </div>
                             </div>
                           ) : (
-                            <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">
-                              {reply.content}
-                            </p>
+                            <div className="space-y-1">
+                              <p
+                                className={`text-xs text-slate-700 leading-relaxed whitespace-pre-wrap ${
+                                  !isReplyExpanded && isReplyLong ? 'line-clamp-2' : ''
+                                }`}
+                              >
+                                {reply.content}
+                              </p>
+                              {isReplyLong && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleExpandText(reply.id)}
+                                  className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
+                                >
+                                  {isReplyExpanded ? 'Sembunyikan' : 'Baca Selengkapnya'}
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
                       );

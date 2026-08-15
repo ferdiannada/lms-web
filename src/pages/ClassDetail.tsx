@@ -26,6 +26,7 @@ import { AssignmentSubmitModal } from '../components/features/assignments/Assign
 import { SubmissionsListModal } from '../components/features/assignments/SubmissionsListModal';
 import { GradingModal } from '../components/features/assignments/GradingModal';
 import { QuizCreateModal } from '../components/features/quizzes/QuizCreateModal';
+import { DeleteClassModal } from '../components/features/classes/DeleteClassModal';
 import { X } from 'lucide-react';
 
 export const ClassDetail: React.FC = () => {
@@ -52,6 +53,7 @@ export const ClassDetail: React.FC = () => {
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isSubmissionsListOpen, setIsSubmissionsListOpen] = useState(false);
   const [isGradingModalOpen, setIsGradingModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const [selectedAsg, setSelectedAsg] = useState<Assignment | null>(null);
   const [currentSubmissions, setCurrentSubmissions] = useState<Submission[]>([]);
@@ -223,6 +225,11 @@ export const ClassDetail: React.FC = () => {
     setQuizzes((prev) => prev.filter((q) => q.id !== quizId));
   };
 
+  const handleConfirmDeleteClass = async (classId: string) => {
+    await api.deleteClass(classId);
+    navigate('/classes');
+  };
+
   if (isLoading || !classDetail) {
     return (
       <div className="p-12 text-center text-slate-500 space-y-3 animate-in fade-in">
@@ -276,7 +283,11 @@ export const ClassDetail: React.FC = () => {
       </div>
 
       {/* Header Banner */}
-      <ClassHeroBanner classDetail={classDetail} />
+      <ClassHeroBanner
+        classDetail={classDetail}
+        isTeacher={isTeacher}
+        onDeleteClick={() => setIsDeleteModalOpen(true)}
+      />
 
       {/* Navigation Tabs */}
       <ClassTabsNav
@@ -411,6 +422,13 @@ export const ClassDetail: React.FC = () => {
         onSuccess={(newQuiz) => {
           setQuizzes((prev) => [newQuiz, ...prev]);
         }}
+      />
+
+      <DeleteClassModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        classDetail={classDetail}
+        onConfirmDelete={handleConfirmDeleteClass}
       />
     </div>
   );

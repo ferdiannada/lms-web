@@ -7,6 +7,7 @@ import { ClassCard } from '../components/features/classes/ClassCard';
 import { ClassFilterTabs } from '../components/features/classes/ClassFilterTabs';
 import { JoinClassModal } from '../components/features/classes/JoinClassModal';
 import { CreateClassModal } from '../components/features/classes/CreateClassModal';
+import { DeleteClassModal } from '../components/features/classes/DeleteClassModal';
 
 export const ClassList: React.FC = () => {
   const { user } = useAuth();
@@ -30,7 +31,13 @@ export const ClassList: React.FC = () => {
   const [gradeFilter, setGradeFilter] = useState<'all' | 'X' | 'XI' | 'XII'>('all');
   const [isJoinOpen, setIsJoinOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [selectedClassToDelete, setSelectedClassToDelete] = useState<ClassRoom | null>(null);
   const [isLoading, setIsLoading] = useState(!cached || cached.length === 0);
+
+  const handleConfirmDeleteClass = async (classId: string) => {
+    await api.deleteClass(classId);
+    setClasses((prev) => prev.filter((c) => c.id !== classId));
+  };
 
   const fetchClasses = useCallback(async (forceRefresh: boolean = false, signal?: AbortSignal) => {
     if (!cached || cached.length === 0 || forceRefresh) {
@@ -333,6 +340,8 @@ export const ClassList: React.FC = () => {
                 cls={cls}
                 index={index}
                 progressInfo={progressInfo}
+                isTeacher={isTeacher}
+                onDeleteClick={(c) => setSelectedClassToDelete(c)}
               />
             );
           })}
@@ -351,6 +360,13 @@ export const ClassList: React.FC = () => {
         onClose={() => setIsCreateOpen(false)}
         rombels={rombels}
         onSuccess={() => fetchClasses(true)}
+      />
+
+      <DeleteClassModal
+        isOpen={!!selectedClassToDelete}
+        onClose={() => setSelectedClassToDelete(null)}
+        classDetail={selectedClassToDelete}
+        onConfirmDelete={handleConfirmDeleteClass}
       />
     </div>
   );

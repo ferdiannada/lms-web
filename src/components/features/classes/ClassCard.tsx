@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { GraduationCap, Users, FileText, HelpCircle, ArrowRight } from 'lucide-react';
+import { GraduationCap, Users, FileText, HelpCircle, ArrowRight, Trash2 } from 'lucide-react';
 import { ClassRoom } from '../../../types';
 
 export const NEEDMCP_CARD_PALETTES = [
@@ -53,9 +53,17 @@ interface ClassCardProps {
   cls: ClassRoom;
   index: number;
   progressInfo: ClassProgressInfo;
+  isTeacher?: boolean;
+  onDeleteClick?: (cls: ClassRoom) => void;
 }
 
-export const ClassCard: React.FC<ClassCardProps> = ({ cls, index, progressInfo }) => {
+export const ClassCard: React.FC<ClassCardProps> = ({
+  cls,
+  index,
+  progressInfo,
+  isTeacher = false,
+  onDeleteClick,
+}) => {
   const style = NEEDMCP_CARD_PALETTES[index % NEEDMCP_CARD_PALETTES.length];
   const studentCount = cls.student_count || 0;
 
@@ -64,14 +72,31 @@ export const ClassCard: React.FC<ClassCardProps> = ({ cls, index, progressInfo }
       to={`/classes/${cls.id}`}
       className={`${style.bg} ${style.text} p-6 lg:p-7 rounded-[2rem] shadow-lg relative overflow-hidden flex flex-col justify-between space-y-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl group cursor-pointer block`}
     >
-      {/* Top Row: Rombel Badge + Student Count */}
+      {/* Top Row: Rombel Badge + Student Count + Quick Delete */}
       <div className="flex justify-between items-center gap-2">
         <span className={`px-3.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${style.badgeBg}`}>
           {cls.rombel || 'SMK'}
         </span>
-        <div className="flex items-center gap-1 text-xs font-bold opacity-90">
-          <GraduationCap className="w-4 h-4" />
-          <span>{studentCount} Siswa</span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 text-xs font-bold opacity-90">
+            <GraduationCap className="w-4 h-4" />
+            <span>{studentCount} Siswa</span>
+          </div>
+
+          {isTeacher && onDeleteClick && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDeleteClick(cls);
+              }}
+              title="Hapus Kelas"
+              className="p-1.5 rounded-full bg-black/10 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer shrink-0"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 

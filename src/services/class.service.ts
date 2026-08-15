@@ -160,4 +160,15 @@ export const classService = {
       joined_at: u.created_at || new Date().toISOString(),
     }));
   },
+
+  async deleteClass(classId: string): Promise<{ success: boolean; message?: string }> {
+    _classesCache = null;
+    try {
+      sessionStorage.removeItem('pedia_classes_cache');
+    } catch {}
+    return await request<{ success: boolean; message?: string }>(`/classes/${classId}`, {
+      method: 'DELETE',
+    });
+  },
 };
+
