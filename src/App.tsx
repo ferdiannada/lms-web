@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
+import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { Login } from './pages/Login';
 
 // Route-Level Code Splitting for ultra-fast initial page loads
@@ -46,8 +47,8 @@ const ProtectedLayout: React.FC = () => {
       <Navbar />
       <div className="flex flex-1 overflow-hidden min-h-0">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 p-4 lg:p-6 xl:p-8">
-          <div className="max-w-[1600px] mx-auto w-full pb-12">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 p-3 sm:p-4 lg:p-6 xl:p-8">
+          <div className="max-w-[1600px] mx-auto w-full pb-20 md:pb-12">
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
@@ -64,6 +65,7 @@ const ProtectedLayout: React.FC = () => {
           </div>
         </main>
       </div>
+      <MobileBottomNav />
     </div>
   );
 };

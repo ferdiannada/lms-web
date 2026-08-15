@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { GradebookEntry, GradeHistoryItem, ClassRoom } from '../types';
-import { Award, BookOpen, CheckCircle, Clock, FileCheck } from 'lucide-react';
+import { Award, BookOpen, CheckCircle, Clock, FileCheck, Layers } from 'lucide-react';
+import { SearchableSelect, SelectOption } from '../components/SearchableSelect';
 
 export const GradebookPage: React.FC = () => {
   const { user } = useAuth();
@@ -15,45 +16,94 @@ export const GradebookPage: React.FC = () => {
   const isTeacher = user?.role === 'guru' || user?.role === 'admin';
 
   useEffect(() => {
+    const controller = new AbortController();
     const init = async () => {
       setIsLoading(true);
       try {
         const clsData = await api.getClasses();
+        if (controller.signal.aborted) return;
         setClasses(clsData);
         if (clsData.length > 0) {
-          setSelectedClassId(clsData[0].id);
+          setSelectedClassId((prev) => prev || clsData[0].id);
         }
-      } catch (err) {
-        console.error('Failed to load classes for gradebook:', err);
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('Failed to load classes for gradebook:', err);
+        }
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     };
     init();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   useEffect(() => {
-    if (!selectedClassId && classes.length > 0) return;
+    if (!selectedClassId && classes.length > 0 && isTeacher) return;
+    const controller = new AbortController();
+
     const fetchGrades = async () => {
       setIsLoading(true);
       try {
         if (isTeacher) {
           if (selectedClassId) {
             const data = await api.getGradebook(selectedClassId);
+            if (controller.signal.aborted) return;
             setTeacherEntries(data);
           }
         } else {
           const data = await api.getMyGradeHistory(selectedClassId || undefined);
+          if (controller.signal.aborted) return;
           setStudentHistory(data);
         }
-      } catch (err) {
-        console.error('Failed to fetch grades:', err);
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('Failed to fetch grades:', err);
+        }
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     };
     fetchGrades();
-  }, [selectedClassId, isTeacher]);
+
+    return () => {
+      controller.abort();
+    };
+  }, [selectedClassId, isTeacher, classes.length]);
+
+  // Options for modern class & subject selector
+  const classOptions: SelectOption[] = useMemo(() => {
+    if (isTeacher) {
+      return classes.map((c) => ({
+        value: c.id,
+        label: c.name,
+        badge: c.rombel || 'SMK',
+        subLabel: c.student_count !== undefined ? `${c.student_count} Siswa` : (c.teacher_name || undefined),
+      }));
+    }
+
+    return [
+      {
+        value: '',
+        label: 'Semua Kelas & Mapel',
+        badge: 'SEMUA',
+        subLabel: `${classes.length} Kelas Terdaftar`,
+      },
+      ...classes.map((c) => ({
+        value: c.id,
+        label: c.name,
+        badge: c.rombel || 'SMK',
+        subLabel: c.teacher_name || (c.student_count !== undefined ? `${c.student_count} Siswa` : undefined),
+      })),
+    ];
+  }, [classes, isTeacher]);
 
   // Extract all unique assignment/quiz column names for Teacher Gradebook
   const gradeColumns = Array.from(
@@ -63,34 +113,36 @@ export const GradebookPage: React.FC = () => {
   return (
     <div className="space-y-6 animate-in fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 flex items-center gap-2.5">
             <Award className="w-6 h-6 text-amber-500" />
             {isTeacher ? 'Rekap & Transkrip Nilai Siswa' : 'Riwayat & Transkrip Nilai Saya'}
           </h1>
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-500 text-sm mt-0.5">
             {isTeacher
               ? 'Daftar rekapitulasi nilai tugas dan kuis siswa yang tersimpan di database.'
               : 'Hasil evaluasi tugas, kuis, dan ujian semester yang telah dinilai.'}
           </p>
         </div>
 
-        {/* Class Selector Dropdown */}
+        {/* Modern Class & Subject Selection */}
         {classes.length > 0 && (
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 p-2 rounded-2xl shadow-2xs">
-            <BookOpen className="w-4 h-4 text-indigo-600 ml-2" />
-            <select
+          <div className="w-full lg:w-88 shrink-0">
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+              Pilih Ruang Kelas & Mata Pelajaran
+            </label>
+            <SearchableSelect
+              options={classOptions}
               value={selectedClassId}
-              onChange={(e) => setSelectedClassId(e.target.value)}
-              className="bg-transparent text-sm font-bold text-slate-800 focus:outline-none pr-4 cursor-pointer"
-            >
-              {classes.map((c) => (
-                <option key={c.id} value={c.id} className="bg-white text-slate-800">
-                  {c.rombel} - {c.name}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setSelectedClassId(val)}
+              placeholder="Pilih atau cari kelas..."
+              searchPlaceholder="Ketik nama mapel atau rombel..."
+              icon={<BookOpen className="w-4 h-4 text-indigo-600 shrink-0" />}
+              footerLabel="Kelas & Mapel"
+              emptyText="Tidak ada kelas yang cocok"
+              emptySubText="Coba cari dengan nama mapel atau kode kelas"
+            />
           </div>
         )}
       </div>

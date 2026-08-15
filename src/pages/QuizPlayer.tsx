@@ -61,8 +61,12 @@ export const QuizPlayer: React.FC = () => {
     setAnswers((prev) => ({ ...prev, [questionId]: optionValue }));
   };
 
+  // Synchronous submit lock ref to prevent simultaneous double submission
+  const isSubmittingRef = useRef(false);
+
   const handleSubmit = async (submitAnswers?: Record<string, string>) => {
-    if (!id || isSubmitting) return;
+    if (!id || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     const finalAnswers = submitAnswers || answersRef.current;
     setIsSubmitting(true);
     try {
@@ -70,6 +74,7 @@ export const QuizPlayer: React.FC = () => {
       setAttemptResult(res);
     } catch (err: any) {
       alert(err.message || 'Gagal mengumpulkan jawaban ujian');
+      isSubmittingRef.current = false;
     } finally {
       setIsSubmitting(false);
     }
@@ -163,14 +168,14 @@ export const QuizPlayer: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in">
       {/* Quiz Top Bar */}
-      <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
         <div>
-          <h1 className="text-base font-bold text-slate-900 line-clamp-1">{quiz.title}</h1>
+          <h1 className="text-sm sm:text-base font-bold text-slate-900 line-clamp-1">{quiz.title}</h1>
           <p className="text-xs text-slate-500">Soal {currentIdx + 1} dari {questions.length}</p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 font-mono font-bold text-sm">
+        <div className="flex items-center justify-between sm:justify-end gap-2.5">
+          <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 font-mono font-bold text-xs sm:text-sm">
             <Clock className="w-4 h-4 text-amber-600 animate-pulse" />
             {formatTime(timeLeft)}
           </div>
@@ -187,7 +192,7 @@ export const QuizPlayer: React.FC = () => {
 
       {/* Main Question Card */}
       {currentQ && (
-        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+        <div className="bg-white p-5 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
           {/* Question Text */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">

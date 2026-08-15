@@ -17,6 +17,10 @@ interface SearchableSelectProps {
   required?: boolean;
   disabled?: boolean;
   className?: string;
+  icon?: React.ReactNode;
+  footerLabel?: string;
+  emptyText?: string;
+  emptySubText?: string;
 }
 
 export const SearchableSelect: React.FC<SearchableSelectProps> = ({
@@ -28,6 +32,10 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   required = false,
   disabled = false,
   className = '',
+  icon,
+  footerLabel = 'Pilihan',
+  emptyText = 'Tidak ada opsi yang cocok',
+  emptySubText = 'Coba cari dengan kata kunci lain',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -92,7 +100,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       >
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-          <Layers className="w-4 h-4 text-indigo-600 shrink-0" />
+          {icon ? icon : <Layers className="w-4 h-4 text-indigo-600 shrink-0" />}
           {selectedOption ? (
             <div className="flex items-center gap-2 truncate">
               <span className="font-bold text-slate-900 truncate">{selectedOption.label}</span>
@@ -171,8 +179,8 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
           <div className="max-h-60 overflow-y-auto p-1.5 space-y-1 custom-scrollbar">
             {filteredOptions.length === 0 ? (
               <div className="py-6 px-3 text-center text-slate-400 text-xs">
-                <p className="font-semibold text-slate-700">Tidak ada rombel yang cocok</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Coba cari dengan kata kunci lain</p>
+                <p className="font-semibold text-slate-700">{emptyText}</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">{emptySubText}</p>
               </div>
             ) : (
               filteredOptions.map((opt) => {
@@ -223,7 +231,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
 
           {/* Footer Info */}
           <div className="px-3 py-1.5 bg-slate-50 border-t border-slate-100 text-[10px] text-slate-500 flex items-center justify-between">
-            <span>Total {options.length} Rombel Terdaftar</span>
+            <span>Total {options.length} {footerLabel}</span>
             <span>{filteredOptions.length} Ditampilkan</span>
           </div>
         </div>
