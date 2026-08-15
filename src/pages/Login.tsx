@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, KeyRound, Mail, ArrowRight, UserCheck, GraduationCap } from 'lucide-react';
-import { MOCK_USERS } from '../services/api';
+import { BookOpen, KeyRound, Mail, ArrowRight, UserCheck, GraduationCap, Server } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('siswa@smk.sch.id');
-  const [password, setPassword] = useState('password123');
+  const [identifier, setIdentifier] = useState('fahrunisa.wulandari@siswa.smk.sch.id');
+  const [password, setPassword] = useState('0103478320');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,19 +16,23 @@ export const Login: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      await login(email, password);
+      await login(identifier, password);
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Login gagal. Periksa kembali email dan password.');
+      setError(err.message || 'Login gagal. Periksa kembali email / NISN / NIP dan password.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleQuickLogin = (role: 'siswa' | 'guru') => {
-    const mock = MOCK_USERS[role];
-    setEmail(mock.email);
-    setPassword('password123');
+    if (role === 'guru') {
+      setIdentifier('ahmad.naim@smk.sch.id');
+      setPassword('3510210608870009');
+    } else {
+      setIdentifier('fahrunisa.wulandari@siswa.smk.sch.id');
+      setPassword('0103478320');
+    }
   };
 
   return (
@@ -56,25 +59,37 @@ export const Login: React.FC = () => {
 
         {/* Quick Demo Login Preset Buttons */}
         <div className="glass-panel p-3.5 rounded-2xl border border-indigo-500/20 space-y-2.5">
-          <p className="text-[11px] font-bold uppercase text-indigo-300 tracking-wider text-center">
-            Pilih Akun Demo (Guru / Siswa)
-          </p>
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[11px] font-bold uppercase text-indigo-300 tracking-wider">
+              Pilih Akun Dapodik / Database
+            </span>
+            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Live DB
+            </span>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => handleQuickLogin('siswa')}
-              className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800/80 hover:bg-indigo-600/20 border border-slate-700 hover:border-indigo-500/40 text-xs font-semibold text-slate-200 transition-colors"
+              className="flex flex-col items-start gap-1 p-3 rounded-xl bg-slate-800/80 hover:bg-indigo-600/20 border border-slate-700 hover:border-indigo-500/40 text-xs font-semibold text-slate-200 transition-colors text-left cursor-pointer"
             >
-              <GraduationCap className="w-4 h-4 text-indigo-400" />
-              Siswa SMK
+              <div className="flex items-center gap-1.5 text-indigo-400">
+                <GraduationCap className="w-4 h-4" />
+                <span>Siswa SMK</span>
+              </div>
+              <span className="text-[10px] text-slate-400 font-normal truncate w-full">Fahrunisa (XI TKJ)</span>
             </button>
             <button
               type="button"
               onClick={() => handleQuickLogin('guru')}
-              className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800/80 hover:bg-emerald-600/20 border border-slate-700 hover:border-emerald-500/40 text-xs font-semibold text-slate-200 transition-colors"
+              className="flex flex-col items-start gap-1 p-3 rounded-xl bg-slate-800/80 hover:bg-emerald-600/20 border border-slate-700 hover:border-emerald-500/40 text-xs font-semibold text-slate-200 transition-colors text-left cursor-pointer"
             >
-              <UserCheck className="w-4 h-4 text-emerald-400" />
-              Guru Pengajar
+              <div className="flex items-center gap-1.5 text-emerald-400">
+                <UserCheck className="w-4 h-4" />
+                <span>Guru Pengajar</span>
+              </div>
+              <span className="text-[10px] text-slate-400 font-normal truncate w-full">Ahmad Naim (Guru)</span>
             </button>
           </div>
         </div>
@@ -89,15 +104,17 @@ export const Login: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Email Akun SMK</label>
+              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                Email / NIP / NISN Akun SMK
+              </label>
               <div className="relative">
                 <Mail className="w-5 h-5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   required
-                  placeholder="siswa@smk.sch.id"
+                  placeholder="email@smk.sch.id atau NISN/NIP"
                   className="w-full bg-slate-900/90 border border-slate-700/80 focus:border-indigo-500 rounded-xl py-3 pl-11 pr-4 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
                 />
               </div>
@@ -126,7 +143,7 @@ export const Login: React.FC = () => {
               className="w-full mt-2 py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
             >
               {isLoading ? (
-                <span>Memproses...</span>
+                <span>Menghubungkan ke Database...</span>
               ) : (
                 <>
                   <span>Masuk ke Portal LMS</span>
@@ -136,8 +153,9 @@ export const Login: React.FC = () => {
             </button>
           </form>
 
-          <div className="text-center pt-2 border-t border-slate-800 text-xs text-slate-400">
-            Terhubung ke Go Gin Backend Gateway (Port 8080)
+          <div className="pt-3 border-t border-slate-800 flex items-center justify-center gap-2 text-[11px] text-slate-400">
+            <Server className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Terhubung ke Backend Go Gin & PostgreSQL</span>
           </div>
         </div>
       </div>

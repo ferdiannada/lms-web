@@ -1,5 +1,6 @@
 import {
   User,
+  Rombel,
   ClassRoom,
   ClassMember,
   Material,
@@ -10,7 +11,9 @@ import {
   Question,
   ForumPost,
   ForumComment,
-  GradebookEntry
+  GradebookEntry,
+  GradeHistoryItem,
+  DashboardSummary,
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
@@ -34,7 +37,238 @@ export const setStoredUser = (user: User) => {
   localStorage.setItem('pedia_user', JSON.stringify(user));
 };
 
-// Generic HTTP fetch helper with mock fallback
+function normalizeUser(raw: any): User {
+  if (!raw) return {} as User;
+  const role = raw.role || 'siswa';
+  return {
+    id: raw.id,
+    name: raw.name,
+    email: raw.email,
+    role,
+    nip_nik_nisn: raw.nip_nik_nisn || '',
+    nisn: role === 'siswa' ? (raw.nip_nik_nisn || raw.nisn) : undefined,
+    nip: role === 'guru' ? (raw.nip_nik_nisn || raw.nip) : undefined,
+    phone: raw.phone || '',
+    rombel: raw.rombel_name || (raw.rombel && typeof raw.rombel === 'object' ? raw.rombel.name : raw.rombel) || '',
+    rombel_id: raw.rombel_id || (raw.rombel && typeof raw.rombel === 'object' ? raw.rombel.id : null),
+    avatar_url: raw.avatar_url || '',
+    dapodik_id: raw.dapodik_id || '',
+    is_initial_password: raw.is_initial_password ?? false,
+    created_at: raw.created_at,
+    updated_at: raw.updated_at,
+  };
+}
+
+function normalizeClass(raw: any): ClassRoom {
+  if (!raw) return {} as ClassRoom;
+  const guru = raw.guru || {};
+  const rombelObj = raw.rombel || {};
+  return {
+    id: raw.id,
+    name: raw.name,
+    code: raw.class_code || raw.code || '',
+    class_code: raw.class_code || raw.code || '',
+    subject: raw.subject || raw.name || '',
+    rombel: rombelObj.name || raw.rombel_name || raw.rombel || 'Semua Rombel',
+    rombel_id: raw.rombel_id,
+    teacher_id: raw.guru_id || raw.teacher_id || guru.id || '',
+    teacher_name: guru.name || raw.teacher_name || 'Guru Pengajar',
+    teacher_avatar: guru.avatar_url || raw.teacher_avatar || '',
+    description: raw.description || '',
+    banner_color: raw.cover_color || raw.banner_color || 'from-indigo-600 to-violet-700',
+    cover_color: raw.cover_color,
+    created_at: raw.created_at || new Date().toISOString(),
+    student_count: raw.member_count ?? raw.student_count ?? 0,
+    member_count: raw.member_count ?? raw.student_count ?? 0,
+    material_count: raw.material_count ?? 0,
+    assignment_count: raw.assignment_count ?? 0,
+    quiz_count: raw.quiz_count ?? 0,
+  };
+}
+
+function normalizeMaterial(raw: any): Material {
+  if (!raw) return {} as Material;
+  return {
+    id: raw.id,
+    class_id: raw.class_id,
+    title: raw.title,
+    description: raw.description || '',
+    type: raw.type || (raw.pdf_url ? 'pdf' : 'manual'),
+    content_html: raw.content_html || '',
+    file_url: raw.pdf_url || raw.file_url || '',
+    pdf_url: raw.pdf_url || raw.file_url || '',
+    pdf_status: raw.pdf_status || 'none',
+    file_name: raw.title ? `${raw.title}.pdf` : 'modul.pdf',
+    file_type: 'application/pdf',
+    is_read: raw.is_read ?? false,
+    created_by: raw.created_by || '',
+    created_at: raw.created_at || new Date().toISOString(),
+  };
+}
+
+function normalizeAssignment(raw: any): Assignment {
+  if (!raw) return {} as Assignment;
+  return {
+    id: raw.id,
+    class_id: raw.class_id,
+    title: raw.title,
+    instructions: raw.description || raw.instructions || '',
+    description: raw.description || raw.instructions || '',
+    file_url: raw.file_url || '',
+    due_date: raw.due_date || new Date().toISOString(),
+    max_score: raw.max_score || 100,
+    created_by: raw.created_by || '',
+    submission_count: raw.submission_count ?? 0,
+    total_students: raw.total_students ?? 0,
+    is_submitted: raw.is_submitted ?? false,
+    score: raw.score ?? null,
+    created_at: raw.created_at || new Date().toISOString(),
+    submission: raw.submission ? normalizeSubmission(raw.submission) : undefined,
+    pending_grading_count: raw.pending_grading_count ?? 0,
+  };
+}
+
+function normalizeSubmission(raw: any): Submission {
+  if (!raw) return {} as Submission;
+  const student = raw.student || {};
+  return {
+    id: raw.id,
+    assignment_id: raw.assignment_id,
+    student_id: raw.student_id,
+    student_name: student.name || raw.student_name || 'Siswa',
+    file_url: raw.file_url || '',
+    file_name: raw.file_name || (raw.file_url ? raw.file_url.split('/').pop() : 'lampiran.zip'),
+    notes: raw.answer_text || raw.notes || '',
+    answer_text: raw.answer_text || raw.notes || '',
+    score: raw.score ?? null,
+    feedback: raw.feedback || '',
+    status: raw.status || (raw.score != null ? 'graded' : 'submitted'),
+    submitted_at: raw.submitted_at || new Date().toISOString(),
+    graded_at: raw.graded_at || (raw.status === 'graded' ? raw.updated_at : undefined),
+    updated_at: raw.updated_at,
+  };
+}
+
+function normalizeQuiz(raw: any): Quiz {
+  if (!raw) return {} as Quiz;
+  const questions = (raw.questions || []).map((q: any) => {
+    // Map options array to flat option_a, option_b, etc. if available
+    let option_a = '';
+    let option_b = '';
+    let option_c = '';
+    let option_d = '';
+    let option_e = '';
+    let correct_option = '';
+
+    if (Array.isArray(q.options)) {
+      q.options.forEach((opt: any) => {
+        const lbl = (opt.label || '').toUpperCase();
+        if (lbl === 'A') option_a = opt.text;
+        else if (lbl === 'B') option_b = opt.text;
+        else if (lbl === 'C') option_c = opt.text;
+        else if (lbl === 'D') option_d = opt.text;
+        else if (lbl === 'E') option_e = opt.text;
+        if (opt.is_correct) correct_option = lbl;
+      });
+    }
+
+    return {
+      id: q.id,
+      quiz_id: q.quiz_id,
+      type: q.type || 'pilihanGanda',
+      question_text: q.question_text || '',
+      points: q.points || 10,
+      image_url: q.image_url || '',
+      options: q.options || [],
+      option_a: option_a || q.option_a || '',
+      option_b: option_b || q.option_b || '',
+      option_c: option_c || q.option_c || '',
+      option_d: option_d || q.option_d || '',
+      option_e: option_e || q.option_e || '',
+      correct_option: correct_option || q.correct_option || '',
+    };
+  });
+
+  return {
+    id: raw.id,
+    class_id: raw.class_id,
+    title: raw.title,
+    description: raw.description || '',
+    duration_minutes: raw.duration_minutes || 30,
+    start_time: raw.start_time,
+    end_time: raw.end_time,
+    is_randomized: raw.is_randomized ?? false,
+    is_completed: raw.is_completed ?? false,
+    score: raw.score ?? null,
+    max_score: raw.max_score ?? null,
+    attempt_id: raw.attempt_id ?? null,
+    max_attempts: raw.max_attempts || 1,
+    due_date: raw.end_time || raw.due_date || new Date().toISOString(),
+    created_by: raw.created_by || '',
+    created_at: raw.created_at || new Date().toISOString(),
+    questions_count: raw.question_count || raw.questions_count || questions.length,
+    question_count: raw.question_count || raw.questions_count || questions.length,
+    questions,
+    attempt: raw.attempt ? {
+      id: raw.attempt.id || raw.attempt_id || '',
+      quiz_id: raw.id,
+      student_id: raw.attempt.student_id || '',
+      score: raw.score ?? raw.attempt.score ?? 0,
+      max_score: raw.max_score ?? raw.attempt.max_score ?? 100,
+      started_at: raw.attempt.started_at || new Date().toISOString(),
+      completed_at: raw.attempt.completed_at,
+      submitted_at: raw.attempt.completed_at || raw.attempt.submitted_at,
+    } : undefined,
+    attempts_count: raw.attempts_count ?? 0,
+  };
+}
+
+function normalizeForumPost(raw: any): ForumPost {
+  if (!raw) return {} as ForumPost;
+  const user = raw.user || {};
+  const rawComments = Array.isArray(raw.comments) ? raw.comments : [];
+  return {
+    id: raw.id,
+    class_id: raw.class_id,
+    user_id: raw.user_id,
+    user_name: user.name || raw.user_name || 'Pengguna',
+    user_role: user.role || raw.user_role || 'siswa',
+    user_avatar: user.avatar_url || raw.user_avatar || '',
+    title: raw.title || '',
+    content: raw.content || '',
+    is_pinned: raw.pinned ?? raw.is_pinned ?? false,
+    pinned: raw.pinned ?? raw.is_pinned ?? false,
+    reactions: raw.reactions || [
+      { emoji: '👍', count: 0, user_reacted: false },
+      { emoji: '🔥', count: 0, user_reacted: false },
+    ],
+    comments_count: raw.comment_count ?? raw.comments_count ?? rawComments.length,
+    comments: rawComments.map(normalizeForumComment),
+    created_at: raw.created_at || new Date().toISOString(),
+    updated_at: raw.updated_at,
+  };
+}
+
+function normalizeForumComment(raw: any): ForumComment {
+  if (!raw) return {} as ForumComment;
+  const user = raw.user || {};
+  return {
+    id: raw.id,
+    post_id: raw.post_id,
+    user_id: raw.user_id,
+    user_name: user.name || raw.user_name || 'Pengguna',
+    user_role: user.role || raw.user_role || 'siswa',
+    user_avatar: user.avatar_url || raw.user_avatar || '',
+    content: raw.content || '',
+    parent_id: raw.parent_id || null,
+    replies: Array.isArray(raw.replies) ? raw.replies.map(normalizeForumComment) : [],
+    reply_count: raw.reply_count || 0,
+    created_at: raw.created_at || new Date().toISOString(),
+    updated_at: raw.updated_at,
+  };
+}
+
+// Generic HTTP fetch helper
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
@@ -46,8 +280,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  const url = `${API_BASE}${endpoint}`;
+
   try {
-    const res = await fetch(`${API_BASE}${endpoint}`, {
+    const res = await fetch(url, {
       ...options,
       headers,
     });
@@ -55,777 +291,424 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     if (res.status === 401) {
       removeToken();
       localStorage.removeItem('pedia_user');
-      window.location.href = '/login';
-      throw new Error('Sesi berakhir. Silakan login kembali.');
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+      throw new Error('Sesi telah berakhir. Silakan login kembali.');
     }
 
     if (!res.ok) {
       const errJson = await res.json().catch(() => ({}));
-      throw new Error(errJson.message || errJson.error || `HTTP ${res.status}`);
+      throw new Error(errJson.error || errJson.message || `HTTP Error ${res.status}`);
+    }
+
+    // Return empty object for 204 No Content
+    if (res.status === 204) {
+      return {} as T;
     }
 
     return await res.json();
   } catch (err: any) {
-    console.warn(`[API] Connection error on ${endpoint}:`, err.message);
+    console.warn(`[API] Error on ${endpoint}:`, err.message);
     throw err;
   }
 }
 
-// MOCK DATA GENERATOR FOR FALLBACK / OFFLINE DEV MODE (Guru & Siswa only)
-export const MOCK_USERS: Record<string, User> = {
-  guru: {
-    id: 'user-guru-1',
-    name: 'Bpk. Ahmad Subagja, M.Kom',
-    email: 'guru@smk.sch.id',
-    role: 'guru',
-    nip: '198503122010011004',
-    rombel: 'Rekayasa Perangkat Lunak (RPL)',
-    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-    is_initial_password: false,
-  },
-  siswa: {
-    id: 'user-siswa-1',
-    name: 'Bagas Aditya Pratama',
-    email: 'siswa@smk.sch.id',
-    role: 'siswa',
-    nisn: '0067812345',
-    rombel: 'XII RPL 1',
-    avatar_url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=250&q=80',
-    is_initial_password: false,
-  },
-};
-
-export const MOCK_CLASSES: ClassRoom[] = [
-  {
-    id: 'cls-1',
-    name: 'Pemrograman Web & Perangkat Bergerak',
-    code: 'PWPB-XII-RPL1',
-    subject: 'Pemrograman Web (PWPB)',
-    rombel: 'XII RPL 1',
-    teacher_id: 'user-guru-1',
-    teacher_name: 'Bpk. Ahmad Subagja, M.Kom',
-    description: 'Pembelajaran React JS, REST API Go Gin, dan arsitektur web modern untuk siswa SMK jurusan Rekayasa Perangkat Lunak.',
-    banner_color: 'from-indigo-600 to-violet-700',
-    created_at: '2026-01-10T08:00:00Z',
-    student_count: 36,
-    material_count: 12,
-    assignment_count: 5,
-  },
-  {
-    id: 'cls-2',
-    name: 'Basis Data & Query Advanced SQL',
-    code: 'BD-XII-RPL1',
-    subject: 'Basis Data (BD)',
-    rombel: 'XII RPL 1',
-    teacher_id: 'user-guru-1',
-    teacher_name: 'Bpk. Ahmad Subagja, M.Kom',
-    description: 'PostgreSQL optimization, indexing, stored procedures, dan migrasi database Dapodik.',
-    banner_color: 'from-emerald-600 to-teal-700',
-    created_at: '2026-01-12T08:00:00Z',
-    student_count: 36,
-    material_count: 8,
-    assignment_count: 3,
-  },
-  {
-    id: 'cls-3',
-    name: 'Pemrograman Berorientasi Objek',
-    code: 'PBO-XII-RPL2',
-    subject: 'Pemrograman Objek (PBO)',
-    rombel: 'XII RPL 2',
-    teacher_id: 'user-guru-1',
-    teacher_name: 'Bpk. Ahmad Subagja, M.Kom',
-    description: 'Konsep OOP, Design Patterns, dan Clean Architecture untuk aplikasi enterprise.',
-    banner_color: 'from-blue-600 to-cyan-700',
-    created_at: '2026-01-15T08:00:00Z',
-    student_count: 34,
-    material_count: 9,
-    assignment_count: 4,
-  },
-];
-
-export const MOCK_MATERIALS: Material[] = [
-  {
-    id: 'mat-1',
-    class_id: 'cls-1',
-    title: 'Modul 1: Integrasi React JS dengan Backend RESTful API Go Gin',
-    description: 'Panduan step-by-step membuat client web modern menggunakan React, TypeScript, dan Axios yang terhubung ke server Go Gin.',
-    file_name: 'modul-1-react-gogin-smk.pdf',
-    file_url: '/uploads/modul-1-react-gogin-smk.pdf',
-    file_size: 2450000,
-    file_type: 'application/pdf',
-    created_by: 'user-guru-1',
-    created_at: '2026-02-01T10:00:00Z',
-  },
-  {
-    id: 'mat-2',
-    class_id: 'cls-1',
-    title: 'Modul 2: State Management & Realtime WebSocket Forum',
-    description: 'Implementasi WebSocket untuk realtime chat discussion, mention @user, dan emoji spring reaction di LMS Web.',
-    file_name: 'modul-2-websocket-react.pdf',
-    file_url: '/uploads/modul-2-websocket-react.pdf',
-    file_size: 1890000,
-    file_type: 'application/pdf',
-    created_by: 'user-guru-1',
-    created_at: '2026-02-08T10:00:00Z',
-  },
-];
-
-export const MOCK_ASSIGNMENTS: Assignment[] = [
-  {
-    id: 'asg-1',
-    class_id: 'cls-1',
-    title: 'Tugas 1: Pengembangan Web Portal SMK berbasis React JS',
-    instructions: 'Buatlah aplikasi web single-page menggunakan React JS dan Tailwind CSS yang menampilkan dashboard siswa, materi, serta tugas. Unggah link repo GitHub dan file ZIP project.',
-    due_date: '2026-08-20T23:59:00Z',
-    max_score: 100,
-    created_by: 'user-guru-1',
-    created_at: '2026-08-01T09:00:00Z',
-    pending_grading_count: 2,
-    submission: {
-      id: 'sub-1',
-      assignment_id: 'asg-1',
-      student_id: 'user-siswa-1',
-      student_name: 'Bagas Aditya Pratama',
-      file_name: 'tugas-lms-web-bagas.zip',
-      file_url: '/uploads/tugas-lms-web-bagas.zip',
-      notes: 'Pak, ini tugas web React JS saya yang sudah terintegrasi dengan backend Go.',
-      score: 95,
-      feedback: 'Kerja sangat bagus! Tampilan clean dan fitur responsif.',
-      submitted_at: '2026-08-05T14:20:00Z',
-      graded_at: '2026-08-06T10:00:00Z',
-    },
-  },
-  {
-    id: 'asg-2',
-    class_id: 'cls-1',
-    title: 'Tugas 2: Implementasi Authentication & JWT Middleware',
-    instructions: 'Koneksikan form login React JS dengan endpoint POST /api/v1/auth/login dan simpan Bearer Token di localStorage.',
-    due_date: '2026-08-25T23:59:00Z',
-    max_score: 100,
-    created_by: 'user-guru-1',
-    created_at: '2026-08-10T09:00:00Z',
-    pending_grading_count: 4,
-  },
-];
-
-export const MOCK_QUIZZES: Quiz[] = [
-  {
-    id: 'qz-1',
-    class_id: 'cls-1',
-    title: 'Ujian Tengah Semester: Pemrograman Web React & Go API',
-    description: 'Ujian evaluasi teori dan praktik konsep React JS components, state, hooks, serta API Go Gin.',
-    duration_minutes: 45,
-    max_attempts: 1,
-    due_date: '2026-08-30T23:59:00Z',
-    created_by: 'user-guru-1',
-    created_at: '2026-08-05T08:00:00Z',
-    questions_count: 5,
-    attempts_count: 28,
-    questions: [
-      {
-        id: 'q-1',
-        quiz_id: 'qz-1',
-        question_text: 'Komponen utama dalam React JS yang digunakan untuk mengelola state lokal pada Functional Component adalah...',
-        option_a: 'useEffect',
-        option_b: 'useState',
-        option_c: 'useContext',
-        option_d: 'useReducer',
-        option_e: 'useRef',
-        correct_option: 'B',
-        points: 20,
-      },
-      {
-        id: 'q-2',
-        quiz_id: 'qz-1',
-        question_text: 'Di dalam framework Go Gin backend LMS SMK, middleware apakah yang bertugas memverifikasi Bearer JWT Token?',
-        option_a: 'RateLimiterMiddleware',
-        option_b: 'AuthMiddleware',
-        option_c: 'CORSMiddleware',
-        option_d: 'AccessLogMiddleware',
-        option_e: 'GzipMiddleware',
-        correct_option: 'B',
-        points: 20,
-      },
-      {
-        id: 'q-3',
-        quiz_id: 'qz-1',
-        question_text: 'Fitur apakah di React yang memfasilitasi navigasi antar halaman tanpa perlu reload seluruh dokumen browser?',
-        option_a: 'React Router DOM',
-        option_b: 'Axios Interceptor',
-        option_c: 'Vite Plugin',
-        option_d: 'Tailwind JIT Engine',
-        option_e: 'Web Worker API',
-        correct_option: 'A',
-        points: 20,
-      },
-      {
-        id: 'q-4',
-        quiz_id: 'qz-1',
-        question_text: 'Method HTTP manakah yang paling sesuai digunakan untuk mengirimkan data login (email dan password)?',
-        option_a: 'GET',
-        option_b: 'POST',
-        option_c: 'PUT',
-        option_d: 'DELETE',
-        option_e: 'PATCH',
-        correct_option: 'B',
-        points: 20,
-      },
-      {
-        id: 'q-5',
-        quiz_id: 'qz-1',
-        question_text: 'Apakah keunggulan utama penggunaan TypeScript dibanding JavaScript biasa dalam pengembangan Web LMS skala besar?',
-        option_a: 'Ukuran file bundle menjadi 50% lebih kecil',
-        option_b: 'Static Type Checking yang mencegah runtime error tipe data',
-        option_c: 'Otomatis membuat database PostgreSQL di backend',
-        option_d: 'Menghilangkan kebutuhan styling CSS',
-        option_e: 'Menggantikan fungsi web browser',
-        correct_option: 'B',
-        points: 20,
-      },
-    ],
-  },
-];
-
-export const MOCK_POSTS: ForumPost[] = [
-  {
-    id: 'post-1',
-    class_id: 'cls-1',
-    user_id: 'user-guru-1',
-    user_name: 'Bpk. Ahmad Subagja, M.Kom',
-    user_role: 'guru',
-    user_avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-    title: 'Pengumuman Persiapan Sertifikasi Keahlian Web Dev SMK 2026',
-    content: 'Selamat pagi siswa-siswi XII RPL 1. Mohon pastikan seluruh Tugas 1 dan Tugas 2 di LMS ini sudah diselesaikan. Minggu depan kita mulai sesi simulasi project berbasis React JS & Go Gin API.',
-    is_pinned: true,
-    reactions: [
-      { emoji: '👍', count: 18, user_reacted: true },
-      { emoji: '🔥', count: 12, user_reacted: true },
-      { emoji: '🙌', count: 7, user_reacted: false },
-    ],
-    comments_count: 2,
-    created_at: '2026-08-12T08:30:00Z',
-    comments: [
-      {
-        id: 'c-1',
-        post_id: 'post-1',
-        user_id: 'user-siswa-1',
-        user_name: 'Bagas Aditya Pratama',
-        user_role: 'siswa',
-        user_avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=250&q=80',
-        content: 'Siap Pak! Terima kasih infonya. Apakah untuk ujian UTS minggu depan boleh membuka dokumentasi React?',
-        created_at: '2026-08-12T09:00:00Z',
-        replies: [
-          {
-            id: 'c-2',
-            post_id: 'post-1',
-            user_id: 'user-guru-1',
-            user_name: 'Bpk. Ahmad Subagja, M.Kom',
-            user_role: 'guru',
-            user_avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-            parent_id: 'c-1',
-            content: 'Boleh @Bagas Aditya Pratama, ujian bersifat open-doc untuk cheatsheet API.',
-            created_at: '2026-08-12T09:15:00Z',
-          },
-        ],
-      },
-    ],
-  },
-];
-
-export const MOCK_SUBMISSIONS: Submission[] = [
-  {
-    id: 'sub-1',
-    assignment_id: 'asg-1',
-    student_id: 'user-siswa-1',
-    student_name: 'Bagas Aditya Pratama',
-    file_name: 'tugas-lms-web-bagas.zip',
-    file_url: '/uploads/tugas-lms-web-bagas.zip',
-    notes: 'Pak, ini tugas web React JS saya yang sudah terintegrasi dengan backend Go.',
-    score: 95,
-    feedback: 'Kerja sangat bagus! Tampilan clean dan fitur responsif.',
-    submitted_at: '2026-08-05T14:20:00Z',
-    graded_at: '2026-08-06T10:00:00Z',
-  },
-  {
-    id: 'sub-2',
-    assignment_id: 'asg-1',
-    student_id: 'user-siswa-2',
-    student_name: 'Dinda Putri Rahayu',
-    file_name: 'tugas-lms-dinda.zip',
-    file_url: '/uploads/tugas-lms-dinda.zip',
-    notes: 'Sudah selesai Pak.',
-    submitted_at: '2026-08-07T11:00:00Z',
-  },
-  {
-    id: 'sub-3',
-    assignment_id: 'asg-1',
-    student_id: 'user-siswa-3',
-    student_name: 'Fikri Haikal',
-    file_name: 'tugas-lms-fikri.zip',
-    file_url: '/uploads/tugas-lms-fikri.zip',
-    notes: 'Tugas React PWPB Fikri XII RPL 1.',
-    submitted_at: '2026-08-08T09:15:00Z',
-  },
-];
-
-// API Functions for Guru & Siswa
+// API Functions connecting to Go Gin Backend & PostgreSQL
 export const api = {
-  // Auth
-  async login(email: string, pass: string): Promise<{ token: string; user: User }> {
-    try {
-      const res = await request<{ token: string; user: User }>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password: pass }),
-      });
-      setToken(res.token);
-      setStoredUser(res.user);
-      return res;
-    } catch {
-      // Mock Fallback for Guru & Siswa
-      let mockRole: 'guru' | 'siswa' = 'siswa';
-      if (email.includes('guru')) mockRole = 'guru';
+  // ── Auth ─────────────────────────────────────────────────────────────
+  async login(identifier: string, pass: string): Promise<{ token: string; user: User }> {
+    const res = await request<{ token: string; user: any }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ identifier, password: pass }),
+    });
 
-      const user = MOCK_USERS[mockRole] || {
-        id: `user-${Date.now()}`,
-        name: email.split('@')[0].toUpperCase(),
-        email,
-        role: mockRole,
-      };
-      const token = `mock-token-${Date.now()}`;
-      setToken(token);
-      setStoredUser(user);
-      return { token, user };
-    }
+    const normalizedUser = normalizeUser(res.user);
+    setToken(res.token);
+    setStoredUser(normalizedUser);
+    return { token: res.token, user: normalizedUser };
   },
 
   async getMe(): Promise<User> {
+    const res = await request<any>('/auth/me');
+    const user = normalizeUser(res);
+    setStoredUser(user);
+    return user;
+  },
+
+  async changePassword(currentPass: string, nextPass: string): Promise<{ message: string }> {
+    return await request<{ message: string }>('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ old_password: currentPass, new_password: nextPass }),
+    });
+  },
+
+  async updateProfile(data: { name?: string; phone?: string; avatar_url?: string }): Promise<User> {
+    const res = await request<{ message: string; user: any }>('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    const user = normalizeUser(res.user);
+    setStoredUser(user);
+    return user;
+  },
+
+  async logout(): Promise<void> {
     try {
-      return await request<User>('/auth/me');
+      await request('/auth/logout', { method: 'POST' });
     } catch {
-      return getStoredUser() || MOCK_USERS.siswa;
+      // Ignore network error on logout
+    } finally {
+      removeToken();
+      localStorage.removeItem('pedia_user');
     }
   },
 
-  async changePassword(current: string, next: string): Promise<{ message: string }> {
-    try {
-      return await request<{ message: string }>('/auth/change-password', {
-        method: 'POST',
-        body: JSON.stringify({ current_password: current, new_password: next }),
-      });
-    } catch {
-      return { message: 'Kata sandi berhasil diperbarui.' };
-    }
-  },
-
-  // Classes (Guru & Siswa)
+  // ── Classes & Rombels ────────────────────────────────────────────────
   async getClasses(): Promise<ClassRoom[]> {
-    try {
-      return await request<ClassRoom[]>('/classes');
-    } catch {
-      return MOCK_CLASSES;
-    }
+    const raw = await request<any[]>('/classes');
+    return Array.isArray(raw) ? raw.map(normalizeClass) : [];
   },
 
   async getClassDetail(id: string): Promise<ClassRoom> {
-    try {
-      return await request<ClassRoom>(`/classes/${id}`);
-    } catch {
-      return MOCK_CLASSES.find((c) => c.id === id) || MOCK_CLASSES[0];
-    }
+    const raw = await request<any>(`/classes/${id}`);
+    return normalizeClass(raw);
+  },
+
+  async getRombels(): Promise<Rombel[]> {
+    const raw = await request<Rombel[]>('/classes/rombels');
+    return Array.isArray(raw) ? raw : [];
+  },
+
+  async createClass(data: { name: string; description?: string; rombel_id: string; cover_color?: string }): Promise<ClassRoom> {
+    const raw = await request<any>('/classes', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: data.name,
+        description: data.description || '',
+        rombel_id: data.rombel_id,
+        cover_color: data.cover_color || '#6366F1',
+      }),
+    });
+    return normalizeClass(raw);
   },
 
   async joinClass(code: string): Promise<ClassRoom> {
-    try {
-      return await request<ClassRoom>('/classes/join', {
-        method: 'POST',
-        body: JSON.stringify({ code }),
-      });
-    } catch {
-      const cls = MOCK_CLASSES.find((c) => c.code.toLowerCase() === code.toLowerCase());
-      if (!cls) throw new Error('Kode kelas tidak ditemukan. Periksa kembali kode dari Guru.');
-      return cls;
-    }
-  },
-
-  async createClass(data: Partial<ClassRoom>): Promise<ClassRoom> {
-    try {
-      return await request<ClassRoom>('/classes', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-    } catch {
-      const newCls: ClassRoom = {
-        id: `cls-${Date.now()}`,
-        name: data.name || 'Kelas Baru SMK',
-        code: `KLS-${Math.floor(1000 + Math.random() * 9000)}`,
-        subject: data.subject || 'Mata Pelajaran',
-        rombel: data.rombel || 'XII RPL 1',
-        teacher_id: data.teacher_id || 'user-guru-1',
-        teacher_name: 'Bpk. Ahmad Subagja, M.Kom',
-        description: data.description || '',
-        banner_color: 'from-violet-600 to-indigo-800',
-        created_at: new Date().toISOString(),
-        student_count: 0,
-        material_count: 0,
-        assignment_count: 0,
-      };
-      MOCK_CLASSES.unshift(newCls);
-      return newCls;
-    }
+    const res = await request<{ message: string; class: any }>('/classes/join', {
+      method: 'POST',
+      body: JSON.stringify({ class_code: code.trim().toUpperCase() }),
+    });
+    return normalizeClass(res.class);
   },
 
   async getClassMembers(classId: string): Promise<ClassMember[]> {
-    try {
-      return await request<ClassMember[]>(`/classes/${classId}/members`);
-    } catch {
-      return [
-        {
-          id: 'mem-1',
-          class_id: classId,
-          user_id: 'user-guru-1',
-          name: 'Bpk. Ahmad Subagja, M.Kom',
-          email: 'guru@smk.sch.id',
-          role: 'guru',
-          joined_at: '2026-01-10T08:00:00Z',
-        },
-        {
-          id: 'mem-2',
-          class_id: classId,
-          user_id: 'user-siswa-1',
-          name: 'Bagas Aditya Pratama',
-          email: 'siswa@smk.sch.id',
-          role: 'siswa',
-          nisn: '0067812345',
-          joined_at: '2026-01-11T09:00:00Z',
-        },
-        {
-          id: 'mem-3',
-          class_id: classId,
-          user_id: 'user-siswa-2',
-          name: 'Dinda Putri Rahayu',
-          email: 'dinda@smk.sch.id',
-          role: 'siswa',
-          nisn: '0067812346',
-          joined_at: '2026-01-11T09:05:00Z',
-        },
-        {
-          id: 'mem-4',
-          class_id: classId,
-          user_id: 'user-siswa-3',
-          name: 'Fikri Haikal',
-          email: 'fikri@smk.sch.id',
-          role: 'siswa',
-          nisn: '0067812347',
-          joined_at: '2026-01-12T10:00:00Z',
-        },
-      ];
-    }
+    const raw = await request<any[]>(`/classes/${classId}/members`);
+    if (!Array.isArray(raw)) return [];
+    return raw.map((u) => ({
+      id: u.id,
+      class_id: classId,
+      user_id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      avatar_url: u.avatar_url,
+      nip_nik_nisn: u.nip_nik_nisn,
+      nisn: u.role === 'siswa' ? u.nip_nik_nisn : undefined,
+      joined_at: u.created_at || new Date().toISOString(),
+    }));
   },
 
-  // Materials (Modul & Pembelajaran)
+  // ── Materials ────────────────────────────────────────────────────────
   async getMaterials(classId: string): Promise<Material[]> {
-    try {
-      return await request<Material[]>(`/classes/${classId}/materials`);
-    } catch {
-      return MOCK_MATERIALS.filter((m) => m.class_id === classId);
-    }
+    const raw = await request<any[]>(`/classes/${classId}/materials`);
+    return Array.isArray(raw) ? raw.map(normalizeMaterial) : [];
   },
 
-  async createMaterial(classId: string, data: Partial<Material>): Promise<Material> {
-    try {
-      return await request<Material>(`/classes/${classId}/materials`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-    } catch {
-      const mat: Material = {
-        id: `mat-${Date.now()}`,
-        class_id: classId,
-        title: data.title || 'Materi Pembelajaran Baru',
+  async getMaterialDetail(id: string): Promise<Material> {
+    const raw = await request<any>(`/materials/${id}`);
+    return normalizeMaterial(raw);
+  },
+
+  async createMaterial(classId: string, data: { title: string; description?: string; file_url?: string; content_html?: string; type?: string }): Promise<Material> {
+    const raw = await request<any>(`/classes/${classId}/materials`, {
+      method: 'POST',
+      body: JSON.stringify({
+        title: data.title,
         description: data.description || '',
-        file_name: data.file_name,
-        file_url: data.file_url,
-        file_type: data.file_type,
-        file_size: data.file_size,
-        created_by: 'user-guru-1',
-        created_at: new Date().toISOString(),
-      };
-      MOCK_MATERIALS.unshift(mat);
-      return mat;
-    }
+        type: data.type || (data.file_url ? 'pdf' : 'manual'),
+        content_html: data.content_html || '',
+        pdf_url: data.file_url || '',
+      }),
+    });
+    return normalizeMaterial(raw);
   },
 
-  // Assignments & Submissions
+  async deleteMaterial(id: string): Promise<void> {
+    await request(`/materials/${id}`, { method: 'DELETE' });
+  },
+
+  // ── Assignments & Submissions ─────────────────────────────────────────
   async getAssignments(classId: string): Promise<Assignment[]> {
-    try {
-      return await request<Assignment[]>(`/classes/${classId}/assignments`);
-    } catch {
-      return MOCK_ASSIGNMENTS.filter((a) => a.class_id === classId);
-    }
+    const raw = await request<any[]>(`/classes/${classId}/assignments`);
+    return Array.isArray(raw) ? raw.map(normalizeAssignment) : [];
   },
 
-  async createAssignment(classId: string, data: Partial<Assignment>): Promise<Assignment> {
-    try {
-      return await request<Assignment>(`/classes/${classId}/assignments`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-    } catch {
-      const asg: Assignment = {
-        id: `asg-${Date.now()}`,
-        class_id: classId,
-        title: data.title || 'Tugas Baru',
-        instructions: data.instructions || '',
-        due_date: data.due_date || new Date(Date.now() + 86400000 * 7).toISOString(),
+  async getAssignmentDetail(id: string): Promise<Assignment> {
+    const raw = await request<any>(`/assignments/${id}`);
+    return normalizeAssignment(raw);
+  },
+
+  async createAssignment(classId: string, data: { title: string; instructions?: string; description?: string; file_url?: string; due_date: string; max_score?: number }): Promise<Assignment> {
+    const raw = await request<any>(`/classes/${classId}/assignments`, {
+      method: 'POST',
+      body: JSON.stringify({
+        title: data.title,
+        description: data.instructions || data.description || '',
+        file_url: data.file_url || '',
+        due_date: data.due_date,
         max_score: data.max_score || 100,
-        created_by: 'user-guru-1',
-        created_at: new Date().toISOString(),
-      };
-      MOCK_ASSIGNMENTS.unshift(asg);
-      return asg;
-    }
+      }),
+    });
+    return normalizeAssignment(raw);
+  },
+
+  async submitAssignment(assignmentId: string, data: { answer_text?: string; notes?: string; file_url?: string }): Promise<Submission> {
+    const raw = await request<any>(`/assignments/${assignmentId}/submit`, {
+      method: 'POST',
+      body: JSON.stringify({
+        answer_text: data.notes || data.answer_text || '',
+        file_url: data.file_url || '',
+      }),
+    });
+    return normalizeSubmission(raw);
   },
 
   async getSubmissions(assignmentId: string): Promise<Submission[]> {
+    const raw = await request<any[]>(`/assignments/${assignmentId}/submissions`);
+    return Array.isArray(raw) ? raw.map(normalizeSubmission) : [];
+  },
+
+  async getMySubmission(assignmentId: string): Promise<Submission | null> {
     try {
-      return await request<Submission[]>(`/assignments/${assignmentId}/submissions`);
+      const raw = await request<any>(`/assignments/${assignmentId}/submission`);
+      return normalizeSubmission(raw);
     } catch {
-      return MOCK_SUBMISSIONS.filter((s) => s.assignment_id === assignmentId);
+      return null;
     }
   },
 
-  async submitAssignment(assignmentId: string, data: { file_name?: string; file_url?: string; notes?: string }): Promise<Submission> {
-    try {
-      return await request<Submission>(`/assignments/${assignmentId}/submit`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-    } catch {
-      const user = getStoredUser();
-      const sub: Submission = {
-        id: `sub-${Date.now()}`,
-        assignment_id: assignmentId,
-        student_id: user?.id || 'user-siswa-1',
-        student_name: user?.name || 'Bagas Aditya Pratama',
-        file_name: data.file_name || 'tugas-jawaban.pdf',
-        file_url: data.file_url || '#',
-        notes: data.notes || '',
-        submitted_at: new Date().toISOString(),
-      };
-      const asg = MOCK_ASSIGNMENTS.find((a) => a.id === assignmentId);
-      if (asg) asg.submission = sub;
-      MOCK_SUBMISSIONS.unshift(sub);
-      return sub;
-    }
+  async gradeSubmission(submissionId: string, score: number, feedback: string): Promise<void> {
+    await request(`/submissions/${submissionId}/grade`, {
+      method: 'POST',
+      body: JSON.stringify({ score, feedback }),
+    });
   },
 
-  async gradeSubmission(submissionId: string, score: number, feedback: string): Promise<Submission> {
-    try {
-      return await request<Submission>(`/submissions/${submissionId}/grade`, {
-        method: 'POST',
-        body: JSON.stringify({ score, feedback }),
-      });
-    } catch {
-      const sub = MOCK_SUBMISSIONS.find((s) => s.id === submissionId);
-      if (sub) {
-        sub.score = score;
-        sub.feedback = feedback;
-        sub.graded_at = new Date().toISOString();
-        return sub;
-      }
-      return {
-        id: submissionId,
-        assignment_id: 'asg-1',
-        student_id: 'user-siswa-1',
-        student_name: 'Bagas Aditya Pratama',
-        score,
-        feedback,
-        submitted_at: new Date().toISOString(),
-        graded_at: new Date().toISOString(),
-      };
-    }
-  },
-
-  // Quizzes & Exam Player
+  // ── Quizzes & Exam Player ────────────────────────────────────────────
   async getQuizzes(classId: string): Promise<Quiz[]> {
-    try {
-      return await request<Quiz[]>(`/classes/${classId}/quizzes`);
-    } catch {
-      return MOCK_QUIZZES.filter((q) => q.class_id === classId);
-    }
-  },
-
-  async createQuiz(classId: string, data: Partial<Quiz>): Promise<Quiz> {
-    try {
-      return await request<Quiz>(`/classes/${classId}/quizzes`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-    } catch {
-      const qz: Quiz = {
-        id: `qz-${Date.now()}`,
-        class_id: classId,
-        title: data.title || 'Kuis Baru',
-        description: data.description || '',
-        duration_minutes: data.duration_minutes || 30,
-        max_attempts: 1,
-        due_date: data.due_date || new Date(Date.now() + 86400000 * 7).toISOString(),
-        created_by: 'user-guru-1',
-        created_at: new Date().toISOString(),
-        questions_count: data.questions?.length || 0,
-        questions: data.questions || [],
-      };
-      MOCK_QUIZZES.unshift(qz);
-      return qz;
-    }
+    const raw = await request<any[]>(`/classes/${classId}/quizzes`);
+    return Array.isArray(raw) ? raw.map(normalizeQuiz) : [];
   },
 
   async getQuizDetail(id: string): Promise<Quiz> {
-    try {
-      return await request<Quiz>(`/quizzes/${id}`);
-    } catch {
-      return MOCK_QUIZZES.find((q) => q.id === id) || MOCK_QUIZZES[0];
-    }
+    const raw = await request<any>(`/quizzes/${id}`);
+    return normalizeQuiz(raw);
+  },
+
+  async createQuiz(classId: string, data: Partial<Quiz>): Promise<Quiz> {
+    const questionsPayload = (data.questions || []).map((q) => {
+      let options = q.options;
+      if (!options || options.length === 0) {
+        options = [];
+        if (q.option_a) options.push({ label: 'A', text: q.option_a, is_correct: q.correct_option === 'A' });
+        if (q.option_b) options.push({ label: 'B', text: q.option_b, is_correct: q.correct_option === 'B' });
+        if (q.option_c) options.push({ label: 'C', text: q.option_c, is_correct: q.correct_option === 'C' });
+        if (q.option_d) options.push({ label: 'D', text: q.option_d, is_correct: q.correct_option === 'D' });
+        if (q.option_e) options.push({ label: 'E', text: q.option_e, is_correct: q.correct_option === 'E' });
+      }
+      return {
+        type: q.type || 'pilihanGanda',
+        question_text: q.question_text,
+        points: q.points || 10,
+        image_url: q.image_url || '',
+        options,
+      };
+    });
+
+    const raw = await request<any>(`/classes/${classId}/quizzes`, {
+      method: 'POST',
+      body: JSON.stringify({
+        title: data.title,
+        description: data.description || '',
+        duration_minutes: data.duration_minutes || 30,
+        start_time: data.start_time,
+        end_time: data.end_time || data.due_date,
+        is_randomized: data.is_randomized ?? false,
+        mcq_option_count: 4,
+        questions: questionsPayload,
+      }),
+    });
+    return normalizeQuiz(raw);
+  },
+
+  async startQuiz(quizId: string): Promise<any> {
+    return await request(`/quizzes/${quizId}/start`, { method: 'POST' });
   },
 
   async submitQuiz(quizId: string, answers: Record<string, string>): Promise<{ score: number; total: number; attempt: QuizAttempt }> {
-    try {
-      return await request(`/quizzes/${quizId}/submit`, {
-        method: 'POST',
-        body: JSON.stringify({ answers }),
-      });
-    } catch {
-      const quiz = MOCK_QUIZZES.find((q) => q.id === quizId) || MOCK_QUIZZES[0];
-      let score = 0;
-      const total = (quiz.questions || []).reduce((acc, q) => acc + q.points, 0);
-
-      (quiz.questions || []).forEach((q) => {
-        if (answers[q.id] === q.correct_option) {
-          score += q.points;
-        }
-      });
-
-      const attempt: QuizAttempt = {
-        id: `att-${Date.now()}`,
-        quiz_id: quizId,
-        student_id: 'user-siswa-1',
-        score,
-        max_score: total,
-        started_at: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-        submitted_at: new Date().toISOString(),
-        answers,
+    const formattedAnswers = Object.entries(answers).map(([qid, val]) => {
+      // If val is a UUID option ID or option letter
+      return {
+        question_id: qid,
+        option_id: val,
+        text_answer: val,
       };
+    });
 
-      quiz.attempt = attempt;
-      return { score, total, attempt };
-    }
+    const res = await request<{ message: string; score: number; max_score: number }>(`/quizzes/${quizId}/submit`, {
+      method: 'POST',
+      body: JSON.stringify({ answers: formattedAnswers }),
+    });
+
+    const user = getStoredUser();
+    const attempt: QuizAttempt = {
+      id: `att-${Date.now()}`,
+      quiz_id: quizId,
+      student_id: user?.id || '',
+      score: res.score,
+      max_score: res.max_score,
+      started_at: new Date().toISOString(),
+      submitted_at: new Date().toISOString(),
+      answers,
+    };
+
+    return {
+      score: res.score,
+      total: res.max_score,
+      attempt,
+    };
   },
 
-  // Forum / Stream Posts
+  async getQuizAttempts(quizId: string): Promise<any[]> {
+    return await request<any[]>(`/quizzes/${quizId}/attempts`);
+  },
+
+  // ── Forum & Comments ─────────────────────────────────────────────────
   async getForumPosts(classId: string): Promise<ForumPost[]> {
-    try {
-      return await request<ForumPost[]>(`/classes/${classId}/forum`);
-    } catch {
-      return MOCK_POSTS.filter((p) => p.class_id === classId);
-    }
+    const raw = await request<any[]>(`/classes/${classId}/forum`);
+    return Array.isArray(raw) ? raw.map(normalizeForumPost) : [];
   },
 
   async createForumPost(classId: string, content: string, title?: string): Promise<ForumPost> {
-    try {
-      return await request<ForumPost>(`/classes/${classId}/forum`, {
-        method: 'POST',
-        body: JSON.stringify({ content, title }),
-      });
-    } catch {
-      const user = getStoredUser() || MOCK_USERS.guru;
-      const post: ForumPost = {
-        id: `post-${Date.now()}`,
-        class_id: classId,
-        user_id: user.id,
-        user_name: user.name,
-        user_role: user.role,
-        user_avatar: user.avatar_url,
-        title,
-        content,
-        is_pinned: false,
-        reactions: [
-          { emoji: '👍', count: 0, user_reacted: false },
-          { emoji: '🔥', count: 0, user_reacted: false },
-        ],
-        comments_count: 0,
-        comments: [],
-        created_at: new Date().toISOString(),
-      };
-      MOCK_POSTS.unshift(post);
-      return post;
-    }
+    const raw = await request<any>(`/classes/${classId}/forum`, {
+      method: 'POST',
+      body: JSON.stringify({ content, title }),
+    });
+    return normalizeForumPost(raw);
+  },
+
+  async getComments(postId: string): Promise<ForumComment[]> {
+    const raw = await request<any[]>(`/forum/posts/${postId}/comments`);
+    return Array.isArray(raw) ? raw.map(normalizeForumComment) : [];
   },
 
   async addComment(postId: string, content: string, parentId?: string): Promise<ForumComment> {
+    const raw = await request<any>(`/forum/posts/${postId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ content, parent_id: parentId }),
+    });
+    return normalizeForumComment(raw);
+  },
+
+  async toggleReaction(targetType: 'post' | 'comment', targetId: string, emoji: string, classId?: string): Promise<any> {
+    return await request('/reactions', {
+      method: 'POST',
+      body: JSON.stringify({
+        target_type: targetType,
+        target_id: targetId,
+        emoji,
+        class_id: classId,
+      }),
+    });
+  },
+
+  // ── Gradebook & Grade History ────────────────────────────────────────
+  async getGradebook(classId: string): Promise<GradebookEntry[]> {
     try {
-      return await request<ForumComment>(`/forum/posts/${postId}/comments`, {
-        method: 'POST',
-        body: JSON.stringify({ content, parent_id: parentId }),
-      });
-    } catch {
-      const user = getStoredUser() || MOCK_USERS.siswa;
-      const comment: ForumComment = {
-        id: `c-${Date.now()}`,
-        post_id: postId,
-        user_id: user.id,
-        user_name: user.name,
-        user_role: user.role,
-        user_avatar: user.avatar_url,
-        content,
-        parent_id: parentId,
-        created_at: new Date().toISOString(),
-      };
-      const post = MOCK_POSTS.find((p) => p.id === postId);
-      if (post) {
-        if (!post.comments) post.comments = [];
-        if (parentId) {
-          const parent = post.comments.find((c) => c.id === parentId);
-          if (parent) {
-            if (!parent.replies) parent.replies = [];
-            parent.replies.push(comment);
-          }
-        } else {
-          post.comments.push(comment);
+      const res = await request<any>(`/classes/${classId}/gradebook`);
+      if (!res || !res.students) return [];
+
+      return res.students.map((st: any) => {
+        const grades: Record<string, number | string> = {};
+        // Map assignments
+        if (st.assignments) {
+          Object.entries(st.assignments).forEach(([asgId, val]: [string, any]) => {
+            const asgObj = (res.assignments || []).find((a: any) => a.id === asgId);
+            const label = asgObj ? asgObj.title : asgId;
+            grades[label] = val.score != null ? val.score : (val.status === 'submitted' ? 'Diserahkan' : '-');
+          });
         }
-        post.comments_count += 1;
-      }
-      return comment;
+        // Map quizzes
+        if (st.quizzes) {
+          Object.entries(st.quizzes).forEach(([qzId, val]: [string, any]) => {
+            const qzObj = (res.quizzes || []).find((q: any) => q.id === qzId);
+            const label = qzObj ? qzObj.title : qzId;
+            grades[label] = val.score != null ? val.score : '-';
+          });
+        }
+
+        return {
+          student_id: st.student_id,
+          student_name: st.student_name,
+          nisn: st.nis || '',
+          grades,
+          average_score: Math.round(st.average_score * 10) / 10,
+        };
+      });
+    } catch (err) {
+      console.warn('[Gradebook] Failed to load gradebook from backend:', err);
+      return [];
     }
   },
 
-  // Gradebook / Riwayat Nilai
-  async getGradebook(classId: string): Promise<GradebookEntry[]> {
-    try {
-      return await request<GradebookEntry[]>(`/classes/${classId}/gradebook`);
-    } catch {
-      return [
-        {
-          student_id: 'user-siswa-1',
-          student_name: 'Bagas Aditya Pratama',
-          nisn: '0067812345',
-          grades: { 'Tugas 1': 95, 'Tugas 2': 90, 'UTS PWPB': 85 },
-          average_score: 90.0,
-        },
-        {
-          student_id: 'user-siswa-2',
-          student_name: 'Dinda Putri Rahayu',
-          nisn: '0067812346',
-          grades: { 'Tugas 1': 88, 'Tugas 2': 92, 'UTS PWPB': 90 },
-          average_score: 90.0,
-        },
-        {
-          student_id: 'user-siswa-3',
-          student_name: 'Fikri Haikal',
-          nisn: '0067812347',
-          grades: { 'Tugas 1': 80, 'Tugas 2': 85, 'UTS PWPB': 78 },
-          average_score: 81.0,
-        },
-      ];
+  async getMyGradeHistory(classId?: string): Promise<GradeHistoryItem[]> {
+    const url = `/me/grade-history${classId ? `?class_id=${classId}` : ''}`;
+    const res = await request<{ items: GradeHistoryItem[] }>(url);
+    return res.items || [];
+  },
+
+  // ── Dashboard Summary ────────────────────────────────────────────────
+  async getDashboardSummary(): Promise<DashboardSummary> {
+    const res = await request<any>('/dashboard/summary');
+    return {
+      pending_assignments: Array.isArray(res.pending_assignments) ? res.pending_assignments.map(normalizeAssignment) : [],
+      active_quizzes: Array.isArray(res.active_quizzes) ? res.active_quizzes.map(normalizeQuiz) : [],
+      recent_materials: Array.isArray(res.recent_materials) ? res.recent_materials.map(normalizeMaterial) : [],
+    };
+  },
+
+  // ── File Upload ──────────────────────────────────────────────────────
+  async uploadFile(file: File): Promise<{ file_name: string; file_url: string }> {
+    const token = getToken();
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
+
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      throw new Error(errJson.error || `Upload gagal (HTTP ${res.status})`);
+    }
+
+    return await res.json();
   },
 };

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import { User, KeyRound, Shield, CheckCircle2 } from 'lucide-react';
+import { User, KeyRound, Shield, CheckCircle2, Phone, Mail, GraduationCap, UserCheck, AlertCircle } from 'lucide-react';
 
 export const Profile: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [currentPass, setCurrentPass] = useState('');
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
@@ -16,6 +16,11 @@ export const Profile: React.FC = () => {
     e.preventDefault();
     setMessage(null);
     setError(null);
+
+    if (newPass.length < 6) {
+      setError('Kata sandi baru minimal 6 karakter.');
+      return;
+    }
 
     if (newPass !== confirmPass) {
       setError('Konfirmasi kata sandi baru tidak cocok.');
@@ -36,34 +41,57 @@ export const Profile: React.FC = () => {
     }
   };
 
+  const isTeacher = user?.role === 'guru' || user?.role === 'admin';
+
   return (
     <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in">
       {/* Profile Info Card */}
       <div className="glass-panel p-8 rounded-3xl border border-slate-800 space-y-6">
         <div className="flex items-center gap-5">
-          <img
-            src={user?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'}
-            alt={user?.name}
-            className="w-20 h-20 rounded-2xl object-cover ring-4 ring-indigo-500/30 shadow-xl"
-          />
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 p-0.5 shadow-xl flex items-center justify-center text-2xl font-extrabold text-white">
+            {user?.name?.charAt(0).toUpperCase() || 'U'}
+          </div>
           <div>
-            <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
-              {user?.role?.toUpperCase()}
-            </span>
-            <h1 className="text-2xl font-extrabold text-white mt-1">{user?.name}</h1>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
+                {isTeacher ? 'Guru Pengajar SMK' : 'Siswa SMK'}
+              </span>
+              <span className="text-[11px] text-emerald-400 font-semibold bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                Akun Terverifikasi Dapodik
+              </span>
+            </div>
+            <h1 className="text-2xl font-extrabold text-white mt-1.5">{user?.name}</h1>
             <p className="text-sm text-slate-400">{user?.email}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-800 text-sm">
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
-            <span className="text-xs text-slate-500 uppercase font-bold">Nomor Induk (NISN/NIP)</span>
-            <p className="font-bold text-slate-200 mt-1">{user?.nisn || user?.nip || '31748291039'}</p>
+            <span className="text-xs text-slate-500 uppercase font-bold">
+              {isTeacher ? 'Nomor Induk Pegawai (NIP/NIK)' : 'Nomor Induk Siswa Nasional (NISN)'}
+            </span>
+            <p className="font-bold text-slate-200 mt-1 font-mono">{user?.nip_nik_nisn || user?.nisn || user?.nip || '-'}</p>
           </div>
 
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
             <span className="text-xs text-slate-500 uppercase font-bold">Rombongan Belajar (Rombel)</span>
-            <p className="font-bold text-slate-200 mt-1">{user?.rombel || 'XII RPL 1'}</p>
+            <p className="font-bold text-slate-200 mt-1">{user?.rombel || 'Semua Rombel'}</p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+            <span className="text-xs text-slate-500 uppercase font-bold">Nomor Telepon / WhatsApp</span>
+            <p className="font-bold text-slate-200 mt-1">{user?.phone || '-'}</p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+            <span className="text-xs text-slate-500 uppercase font-bold">Status Kata Sandi</span>
+            <p className="font-bold text-slate-200 mt-1">
+              {user?.is_initial_password ? (
+                <span className="text-amber-400">Password Bawaan (Disarankan Ubah)</span>
+              ) : (
+                <span className="text-emerald-400">Telah Diperbarui</span>
+              )}
+            </p>
           </div>
         </div>
       </div>
@@ -83,7 +111,8 @@ export const Profile: React.FC = () => {
         )}
 
         {error && (
-          <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm font-medium">
+          <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm font-medium flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
             {error}
           </div>
         )}
@@ -109,7 +138,7 @@ export const Profile: React.FC = () => {
                 value={newPass}
                 onChange={(e) => setNewPass(e.target.value)}
                 required
-                placeholder="••••••••"
+                placeholder="Minimal 10 karakter"
                 className="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-sm text-slate-100 focus:border-indigo-500"
               />
             </div>
@@ -121,7 +150,7 @@ export const Profile: React.FC = () => {
                 value={confirmPass}
                 onChange={(e) => setConfirmPass(e.target.value)}
                 required
-                placeholder="••••••••"
+                placeholder="Ulangi kata sandi baru"
                 className="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-sm text-slate-100 focus:border-indigo-500"
               />
             </div>
