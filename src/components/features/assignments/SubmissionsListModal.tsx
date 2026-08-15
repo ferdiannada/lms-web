@@ -3,6 +3,8 @@ import { Download, ExternalLink, Award, FileText, CheckCircle2, Clock } from 'lu
 import { Modal } from '../../Modal';
 import { Assignment, Submission } from '../../../types';
 
+import { sanitizeUrl } from '../../../utils/security';
+
 interface SubmissionsListModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -64,7 +66,7 @@ export const SubmissionsListModal: React.FC<SubmissionsListModalProps> = ({
                 {sub.file_url && (
                   <div className="flex items-center gap-2 pt-0.5">
                     <a
-                      href={sub.file_url}
+                      href={sanitizeUrl(sub.file_url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"

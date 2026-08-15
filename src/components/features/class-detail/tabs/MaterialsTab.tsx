@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, BookOpen, Download, FileText, Trash2 } from 'lucide-react';
 import { Material } from '../../../../types';
+import { sanitizeUrl } from '../../../../utils/security';
 
 interface MaterialsTabProps {
   materials: Material[];
@@ -86,7 +87,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({
                     {mat.file_name || 'Dokumen Materi'}
                   </span>
                   <a
-                    href={mat.file_url}
+                    href={sanitizeUrl(mat.file_url)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition"

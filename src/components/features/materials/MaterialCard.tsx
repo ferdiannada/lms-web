@@ -1,6 +1,7 @@
 import React from 'react';
 import { BookOpen, Download, Trash2 } from 'lucide-react';
 import { Material } from '../../../types';
+import { sanitizeUrl } from '../../../utils/security';
 
 interface MaterialCardProps {
   material: Material & { className?: string };
@@ -52,7 +53,7 @@ export const MaterialCard: React.FC<MaterialCardProps> = ({
             {material.file_name || 'Dokumen Modul'}
           </span>
           <a
-            href={material.file_url}
+            href={sanitizeUrl(material.file_url)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition"

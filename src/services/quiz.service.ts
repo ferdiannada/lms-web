@@ -4,6 +4,9 @@ import { getStoredUser } from './storage';
 
 export function normalizeQuiz(raw: any): Quiz {
   if (!raw) return {} as Quiz;
+  const user = getStoredUser();
+  const isStudent = user?.role === 'siswa';
+
   const questions = (raw.questions || []).map((q: any) => {
     let option_a = '';
     let option_b = '';
@@ -12,17 +15,25 @@ export function normalizeQuiz(raw: any): Quiz {
     let option_e = '';
     let correct_option = '';
 
-    if (Array.isArray(q.options)) {
-      q.options.forEach((opt: any) => {
-        const lbl = (opt.label || '').toUpperCase();
-        if (lbl === 'A') option_a = opt.text;
-        else if (lbl === 'B') option_b = opt.text;
-        else if (lbl === 'C') option_c = opt.text;
-        else if (lbl === 'D') option_d = opt.text;
-        else if (lbl === 'E') option_e = opt.text;
-        if (opt.is_correct) correct_option = lbl;
-      });
-    }
+    const sanitizedOptions = Array.isArray(q.options)
+      ? q.options.map((opt: any) => {
+          const lbl = (opt.label || '').toUpperCase();
+          if (lbl === 'A') option_a = opt.text;
+          else if (lbl === 'B') option_b = opt.text;
+          else if (lbl === 'C') option_c = opt.text;
+          else if (lbl === 'D') option_d = opt.text;
+          else if (lbl === 'E') option_e = opt.text;
+          if (!isStudent && opt.is_correct) correct_option = lbl;
+
+          return {
+            id: opt.id,
+            question_id: opt.question_id,
+            label: opt.label,
+            text: opt.text,
+            is_correct: isStudent ? undefined : opt.is_correct,
+          };
+        })
+      : [];
 
     return {
       id: q.id,
@@ -31,13 +42,13 @@ export function normalizeQuiz(raw: any): Quiz {
       question_text: q.question_text || '',
       points: q.points || 10,
       image_url: q.image_url || '',
-      options: q.options || [],
+      options: sanitizedOptions,
       option_a: option_a || q.option_a || '',
       option_b: option_b || q.option_b || '',
       option_c: option_c || q.option_c || '',
       option_d: option_d || q.option_d || '',
       option_e: option_e || q.option_e || '',
-      correct_option: correct_option || q.correct_option || '',
+      correct_option: isStudent ? '' : (correct_option || q.correct_option || ''),
     };
   });
 

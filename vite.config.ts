@@ -22,12 +22,12 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target,
           changeOrigin: true,
-          secure: false,
+          secure: true,
         },
         '/uploads': {
           target,
           changeOrigin: true,
-          secure: false,
+          secure: true,
         },
       },
     },

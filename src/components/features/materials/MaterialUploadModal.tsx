@@ -64,6 +64,12 @@ export const MaterialUploadModal: React.FC<MaterialUploadModalProps> = ({
     try {
       let fileUrl = '';
       if (file) {
+        const MAX_SIZE = 25 * 1024 * 1024; // 25 MB
+        if (file.size > MAX_SIZE) {
+          setErrorMsg('Ukuran berkas melebihi batas maksimal 25 MB.');
+          setIsUploading(false);
+          return;
+        }
         const uploadRes = await api.uploadFile(file);
         fileUrl = uploadRes.file_url;
       }
@@ -142,7 +148,17 @@ export const MaterialUploadModal: React.FC<MaterialUploadModalProps> = ({
           <div className="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center hover:border-indigo-400 bg-slate-50/50 hover:bg-indigo-50/20 transition cursor-pointer relative">
             <input
               type="file"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              accept=".pdf,.docx,.doc,.pptx,.ppt,.zip,.rar"
+              onChange={(e) => {
+                const selected = e.target.files?.[0] || null;
+                if (selected && selected.size > 25 * 1024 * 1024) {
+                  setErrorMsg('Ukuran berkas melebihi batas maksimal 25 MB.');
+                  setFile(null);
+                  return;
+                }
+                setErrorMsg(null);
+                setFile(selected);
+              }}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
             <div className="flex flex-col items-center">

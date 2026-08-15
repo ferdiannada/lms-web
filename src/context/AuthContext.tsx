@@ -42,8 +42,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
+    api.logout().catch(() => {});
     removeToken();
     localStorage.removeItem('pedia_user');
+    try {
+      sessionStorage.removeItem('pedia_classes_cache');
+      sessionStorage.removeItem('pedia_rombels_cache');
+    } catch {}
     setUser(null);
     setTokenState(null);
   };
