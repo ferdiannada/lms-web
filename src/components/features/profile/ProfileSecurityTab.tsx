@@ -46,6 +46,11 @@ export const ProfileSecurityTab: React.FC<ProfileSecurityTabProps> = ({ user }) 
       return;
     }
 
+    if (!/[A-Z]/.test(newPass) || !/[a-z]/.test(newPass) || !/[0-9]/.test(newPass) || !/[^A-Za-z0-9]/.test(newPass)) {
+      setError('Kata sandi harus mengandung huruf besar, huruf kecil, angka, serta simbol.');
+      return;
+    }
+
     if (newPass !== confirmPass) {
       setError('Konfirmasi kata sandi baru tidak cocok dengan kata sandi baru.');
       return;
@@ -114,7 +119,7 @@ export const ProfileSecurityTab: React.FC<ProfileSecurityTabProps> = ({ user }) 
             Perbarui Kata Sandi Akun
           </h2>
           <p className="text-xs font-medium text-m3-on-surface-variant mt-1">
-            Gunakan kombinasi minimal 6 karakter yang tidak mudah ditebak oleh orang lain.
+            Gunakan kombinasi minimal 6 karakter yang terdiri dari huruf besar, huruf kecil, angka, dan simbol.
           </p>
         </div>
 
@@ -170,8 +175,8 @@ export const ProfileSecurityTab: React.FC<ProfileSecurityTabProps> = ({ user }) 
                   {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <p className="text-[10px] text-m3-on-surface-variant font-medium mt-1 ml-1">
-                Persyaratan: Kata sandi baru minimal 6 karakter.
+              <p className="text-[10px] text-m3-on-surface-variant font-medium mt-1 ml-1 leading-relaxed">
+                Persyaratan: Minimal 6 karakter, mengandung huruf besar & kecil, angka, serta simbol.
               </p>
 
               {/* Password Strength Indicator */}
