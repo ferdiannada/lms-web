@@ -4,38 +4,40 @@ import { Link } from 'react-router-dom';
 import { NotificationDropdown } from './layout/NotificationDropdown';
 import { ProfileDropdown } from './layout/ProfileDropdown';
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  isScrolled?: boolean;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ isScrolled = false }) => {
   const { user, logout } = useAuth();
 
   return (
-    <header className="h-16 shrink-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 lg:px-8 py-3 flex items-center justify-between shadow-xs">
-      {/* Brand & Logo */}
-      <div className="flex items-center gap-3">
-        <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 p-1 shadow-xs group-hover:scale-105 transition-transform overflow-hidden flex items-center justify-center">
-            <img
-              src="/logo_smk_new.png"
-              alt="SMK Al-Azhar"
-              className="w-full h-full object-contain"
-            />
-          </div>
-          <div>
-            <span className="text-xl font-black text-slate-900 tracking-tight">
-              PEDIA <span className="text-indigo-600 font-black">LMS</span>
-            </span>
-            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-medium">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              Portal Guru & Siswa • SMK Al-Azhar
-            </div>
-          </div>
-        </Link>
-      </div>
+    <div className={`absolute top-0 left-0 right-0 z-[60] flex justify-center pointer-events-none transition-all duration-300 ease-out ${
+      isScrolled ? 'pt-3 px-3 sm:px-6' : 'pt-0 px-0'
+    }`}>
+      <header 
+        className={`pointer-events-auto flex items-center justify-between text-m3-on-surface transition-all duration-300 ease-out ${
+          isScrolled 
+            ? 'h-14 w-full px-6 py-2 rounded-full bg-white/60 backdrop-blur-xl backdrop-saturate-200 shadow-lg border border-white/40' 
+            : 'h-16 w-full px-4 lg:px-8 py-3 bg-m3-surface shadow-none border-b border-m3-outline-variant/20 rounded-none'
+        }`}
+      >
+        {/* Greeting & Date Area (Left) */}
+        <div className={`transition-all duration-300 ${isScrolled ? 'hidden md:flex flex-col' : 'flex flex-col'}`}>
+          <span className="text-sm font-bold text-m3-on-surface tracking-tight">
+            Halo, <span className="text-m3-primary">{user?.name?.split(' ')[0] || 'Pengguna'}</span> 👋
+          </span>
+          <span className="text-[10px] text-m3-on-surface-variant font-medium">
+            {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </span>
+        </div>
 
-      {/* User Actions & Profile */}
-      <div className="flex items-center gap-3">
-        <NotificationDropdown userExists={!!user} />
-        <ProfileDropdown user={user} logout={logout} />
-      </div>
-    </header>
+        {/* User Actions & Profile (Right) */}
+        <div className="flex items-center gap-3">
+          <NotificationDropdown userExists={!!user} />
+          <ProfileDropdown user={user} logout={logout} />
+        </div>
+      </header>
+    </div>
   );
 };

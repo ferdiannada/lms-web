@@ -16,10 +16,18 @@ export const ProfileHero: React.FC<ProfileHeroProps> = ({ user, isTeacher }) => 
     : '2026';
 
   return (
-    <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-[#1e1b4b] via-[#312e81] to-[#4338ca] text-white p-6 sm:p-8 lg:p-10 shadow-xl">
-      {/* Background Decorative Blur Orbs */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
-      <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-indigo-400/10 rounded-full blur-2xl pointer-events-none"></div>
+    <div className="relative overflow-hidden rounded-[2.5rem] bg-m3-primary border border-m3-outline-variant/20 p-6 sm:p-8 lg:p-10 shadow-lg group">
+      {/* M3 Ambient Blurs */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute -bottom-10 left-20 w-72 h-72 bg-m3-secondary/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      {/* Decorative Floating Icons */}
+      <div className="absolute top-4 right-16 w-20 h-20 opacity-20 group-hover:opacity-40 transition-opacity duration-700 animate-[spin_15s_linear_infinite] [animation-play-state:paused] group-hover:[animation-play-state:running] pointer-events-none">
+        <GraduationCap className="w-full h-full text-white" />
+      </div>
+      <div className="absolute -bottom-8 right-40 w-32 h-32 opacity-10 group-hover:opacity-30 transition-opacity duration-700 animate-[bounce_8s_infinite] [animation-play-state:paused] group-hover:[animation-play-state:running] pointer-events-none">
+        <Award className="w-full h-full text-white" />
+      </div>
 
       <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         {/* Left: Avatar & Identity */}

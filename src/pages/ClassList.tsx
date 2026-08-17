@@ -303,7 +303,7 @@ export const ClassList: React.FC = () => {
 
       {/* 3. Empty State */}
       {!isLoading && filteredClasses.length === 0 && (
-        <div className="bg-white p-12 rounded-3xl border border-slate-200 text-center space-y-4 shadow-xs">
+        <div key={`empty-${gradeFilter}-${search}`} className="bg-white p-12 rounded-3xl border border-slate-200 text-center space-y-4 shadow-xs animate-m3-enter">
           <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 mx-auto flex items-center justify-center">
             <BookOpen className="w-8 h-8" />
           </div>
@@ -322,7 +322,7 @@ export const ClassList: React.FC = () => {
 
       {/* 4. Class Cards Grid */}
       {!isLoading && filteredClasses.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div key={`${gradeFilter}-${search}`} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-m3-enter">
           {filteredClasses.map((cls, index) => {
             const progressInfo = classProgressMap[cls.id] || {
               percent: 0,

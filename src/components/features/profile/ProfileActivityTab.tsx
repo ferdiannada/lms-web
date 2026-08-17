@@ -9,86 +9,86 @@ interface ProfileActivityTabProps {
 export const ProfileActivityTab: React.FC<ProfileActivityTabProps> = ({ user }) => {
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6">
-        <div className="pb-4 border-b border-slate-100">
-          <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-emerald-600" />
+      <div className="bg-m3-surface p-6 sm:p-8 rounded-[2rem] border border-m3-outline-variant/30 shadow-m3-elevation-1 space-y-6 transition-all duration-300">
+        <div className="pb-5 border-b border-m3-outline-variant/30">
+          <h2 className="text-lg font-extrabold text-m3-on-surface flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-m3-primary" />
             Riwayat Sesi & Sinkronisasi Sistem
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs font-medium text-m3-on-surface-variant mt-1">
             Informasi status koneksi portal dengan Go API Gateway dan database Dapodik.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Sesi Aktif Saat Ini */}
-          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+          <div className="p-6 rounded-[1.5rem] bg-m3-surface-container/50 border border-m3-outline-variant/30 space-y-4 hover:bg-m3-surface-container transition-colors">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Laptop className="w-4 h-4 text-indigo-600" />
-                <span className="text-xs font-bold text-slate-900">Perangkat & Sesi Aktif</span>
+              <div className="flex items-center gap-2.5">
+                <Laptop className="w-4 h-4 text-m3-primary" />
+                <span className="text-xs font-extrabold text-m3-on-surface">Perangkat & Sesi Aktif</span>
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
                 Online
               </span>
             </div>
 
-            <div className="space-y-1 text-xs text-slate-600">
-              <p className="font-semibold text-slate-800">Browser Web Modern</p>
-              <p className="text-[11px] text-slate-400">
+            <div className="space-y-1 text-xs">
+              <p className="font-bold text-m3-on-surface">Browser Web Modern</p>
+              <p className="text-[11px] font-medium text-m3-on-surface-variant leading-relaxed">
                 Token JWT tersimpan aman dengan enkripsi Bearer Header.
               </p>
             </div>
 
-            <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-500">
+            <div className="pt-3 border-t border-m3-outline-variant/30 flex items-center justify-between text-[11px] font-bold text-m3-on-surface-variant">
               <span>Status Keamanan:</span>
-              <span className="font-bold text-emerald-600 flex items-center gap-1">
+              <span className="text-emerald-700 flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Terproteksi
               </span>
             </div>
           </div>
 
           {/* Integrasi Backend Go Gin */}
-          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+          <div className="p-6 rounded-[1.5rem] bg-m3-surface-container/50 border border-m3-outline-variant/30 space-y-4 hover:bg-m3-surface-container transition-colors">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Server className="w-4 h-4 text-emerald-600" />
-                <span className="text-xs font-bold text-slate-900">Server API Gateway</span>
+              <div className="flex items-center gap-2.5">
+                <Server className="w-4 h-4 text-m3-primary" />
+                <span className="text-xs font-extrabold text-m3-on-surface">Server API Gateway</span>
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-m3-primary/10 text-m3-primary border border-m3-primary/20">
                 Go (Gin) Engine
               </span>
             </div>
 
-            <div className="space-y-1 text-xs text-slate-600">
-              <p className="font-semibold text-slate-800">SMK Al-Azhar Cloud Core</p>
-              <p className="text-[11px] text-slate-400">
+            <div className="space-y-1 text-xs">
+              <p className="font-bold text-m3-on-surface">SMK Al-Azhar Cloud Core</p>
+              <p className="text-[11px] font-medium text-m3-on-surface-variant leading-relaxed">
                 Sinkronisasi Dapodik otomatis & WebSocket real-time terhubung.
               </p>
             </div>
 
-            <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-500">
+            <div className="pt-3 border-t border-m3-outline-variant/30 flex items-center justify-between text-[11px] font-bold text-m3-on-surface-variant">
               <span>Dapodik Sync:</span>
-              <span className="font-bold text-emerald-600 flex items-center gap-1">
-                <RefreshCw className="w-3 h-3 animate-spin" /> Real-time
+              <span className="text-emerald-700 flex items-center gap-1.5">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Real-time
               </span>
             </div>
           </div>
         </div>
 
         {/* User Account Details */}
-        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2">
-          <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
-            <span className="text-slate-500 font-semibold">User Identifier ID:</span>
-            <span className="font-mono text-slate-800 font-bold">{user?.id || '-'}</span>
+        <div className="p-5 rounded-[1.5rem] bg-m3-surface-container/30 border border-m3-outline-variant/30 text-xs space-y-3">
+          <div className="flex justify-between items-center py-1.5 border-b border-m3-outline-variant/30">
+            <span className="text-m3-on-surface-variant font-bold">User Identifier ID:</span>
+            <span className="font-mono text-m3-on-surface font-extrabold bg-m3-surface-container-high px-2 py-0.5 rounded-md">{user?.id || '-'}</span>
           </div>
-          <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
-            <span className="text-slate-500 font-semibold">Alamat Email Terdaftar:</span>
-            <span className="text-slate-800 font-semibold">{user?.email || '-'}</span>
+          <div className="flex justify-between items-center py-1.5 border-b border-m3-outline-variant/30">
+            <span className="text-m3-on-surface-variant font-bold">Alamat Email Terdaftar:</span>
+            <span className="text-m3-on-surface font-extrabold">{user?.email || '-'}</span>
           </div>
-          <div className="flex justify-between items-center py-1">
-            <span className="text-slate-500 font-semibold">Sinkronisasi Terakhir:</span>
-            <span className="text-slate-800 font-semibold">
+          <div className="flex justify-between items-center py-1.5">
+            <span className="text-m3-on-surface-variant font-bold">Sinkronisasi Terakhir:</span>
+            <span className="text-m3-on-surface font-extrabold bg-m3-surface-container px-2 py-0.5 rounded-md">
               {new Date().toLocaleDateString('id-ID', {
                 day: 'numeric',
                 month: 'long',

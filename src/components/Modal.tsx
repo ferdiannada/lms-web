@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -9,24 +10,31 @@ interface ModalProps {
 }
 
 export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in">
-      <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col bg-white rounded-3xl p-5 sm:p-6 shadow-2xl border border-slate-200">
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in">
+      <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col bg-m3-surface-container-high rounded-3xl p-6 sm:p-7 shadow-m3-elevation-3 text-m3-on-surface">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
-          <h3 className="text-base sm:text-lg font-bold text-slate-900">{title}</h3>
+        <div className="flex items-center justify-between pb-4 shrink-0">
+          <h3 className="text-xl sm:text-2xl font-normal tracking-tight">{title}</h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="p-2 rounded-full text-m3-on-surface hover:bg-m3-surface-variant transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
         {/* Content with vertical scrolling */}
-        <div className="overflow-y-auto pt-4 flex-1 pr-0.5">{children}</div>
+        <div className="overflow-y-auto pt-4 flex-1 pr-0.5 custom-scrollbar">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

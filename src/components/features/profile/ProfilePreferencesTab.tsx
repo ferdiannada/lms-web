@@ -34,50 +34,50 @@ export const ProfilePreferencesTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6">
-        <div className="pb-4 border-b border-slate-100">
-          <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
-            <Sliders className="w-5 h-5 text-indigo-600" />
+      <div className="bg-m3-surface p-6 sm:p-8 rounded-[2rem] border border-m3-outline-variant/30 shadow-m3-elevation-1 space-y-6 transition-all duration-300">
+        <div className="pb-5 border-b border-m3-outline-variant/30">
+          <h2 className="text-lg font-extrabold text-m3-on-surface flex items-center gap-2">
+            <Sliders className="w-5 h-5 text-m3-primary" />
             Preferensi Aplikasi & Notifikasi
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs font-medium text-m3-on-surface-variant mt-1">
             Atur pengalaman interaktif, audio alert, dan pemberitahuan aktivitas belajar.
           </p>
         </div>
 
         <div className="space-y-4">
           {/* 1. Suara Notifikasi */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2.5 rounded-xl bg-indigo-100/70 text-indigo-700 shrink-0">
+          <div className="p-5 sm:p-6 rounded-[1.5rem] bg-m3-surface-container/50 border border-m3-outline-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-5 transition-colors hover:bg-m3-surface-container">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-2xl bg-m3-primary/10 text-m3-primary shrink-0">
                 <Volume2 className="w-5 h-5" />
               </div>
-              <div className="space-y-0.5">
-                <p className="text-xs font-bold text-slate-900">Audio Chime Notifikasi Interaktif</p>
-                <p className="text-[11px] text-slate-500 max-w-md leading-relaxed">
+              <div className="space-y-1">
+                <p className="text-xs font-extrabold text-m3-on-surface">Audio Chime Notifikasi Interaktif</p>
+                <p className="text-[11px] font-medium text-m3-on-surface-variant max-w-md leading-relaxed">
                   Memainkan nada halus Web Audio API saat ada tugas baru, balasan komentar forum, atau pengumuman kelas.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+            <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
               <button
                 type="button"
                 onClick={playNotificationChime}
-                className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-[11px] flex items-center gap-1.5 transition cursor-pointer"
+                className="px-4 py-2 rounded-full bg-m3-surface border border-m3-outline-variant/30 hover:bg-m3-surface-variant text-m3-on-surface font-bold text-xs flex items-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
                 title="Coba Nada Suara"
               >
-                <Play className="w-3 h-3 text-indigo-600" /> Uji Suara
+                <Play className="w-3 h-3 text-m3-primary" /> Uji Suara
               </button>
               <button
                 type="button"
                 onClick={handleToggleSound}
                 className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                  soundEnabled ? 'bg-indigo-600' : 'bg-slate-300'
+                  soundEnabled ? 'bg-m3-primary' : 'bg-m3-surface-container-high'
                 }`}
               >
                 <span
-                  className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${
+                  className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform shadow-sm ${
                     soundEnabled ? 'right-1' : 'left-1'
                   }`}
                 ></span>
@@ -86,21 +86,21 @@ export const ProfilePreferencesTab: React.FC = () => {
           </div>
 
           {/* 2. Notifikasi Browser */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2.5 rounded-xl bg-emerald-100/70 text-emerald-700 shrink-0">
+          <div className="p-5 sm:p-6 rounded-[1.5rem] bg-m3-surface-container/50 border border-m3-outline-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-5 transition-colors hover:bg-m3-surface-container">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-700 shrink-0">
                 <Bell className="w-5 h-5" />
               </div>
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <p className="text-xs font-bold text-slate-900">Notifikasi Desktop / Browser</p>
+                  <p className="text-xs font-extrabold text-m3-on-surface">Notifikasi Desktop / Browser</p>
                   <span
-                    className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                    className={`text-[9px] font-extrabold px-2.5 py-0.5 rounded-full ${
                       browserNotifStatus === 'granted'
-                        ? 'bg-emerald-100 text-emerald-700'
+                        ? 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20'
                         : browserNotifStatus === 'denied'
-                        ? 'bg-rose-100 text-rose-700'
-                        : 'bg-slate-200 text-slate-600'
+                        ? 'bg-rose-500/10 text-rose-700 border border-rose-500/20'
+                        : 'bg-m3-surface-variant text-m3-on-surface-variant'
                     }`}
                   >
                     {browserNotifStatus === 'granted'
@@ -110,7 +110,7 @@ export const ProfilePreferencesTab: React.FC = () => {
                       : 'Belum Diatur'}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 max-w-md leading-relaxed">
+                <p className="text-[11px] font-medium text-m3-on-surface-variant max-w-md leading-relaxed">
                   Menampilkan banner notifikasi di layar saat Anda sedang membuka tab aplikasi lain.
                 </p>
               </div>
@@ -120,7 +120,7 @@ export const ProfilePreferencesTab: React.FC = () => {
               <button
                 type="button"
                 onClick={handleRequestBrowserNotif}
-                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition cursor-pointer self-start sm:self-center"
+                className="px-5 py-2.5 rounded-full bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary font-bold text-xs shadow-m3-elevation-1 transition-all active:scale-95 cursor-pointer self-start sm:self-center shrink-0"
               >
                 Izinkan Notifikasi
               </button>
@@ -128,19 +128,19 @@ export const ProfilePreferencesTab: React.FC = () => {
           </div>
 
           {/* 3. Antarmuka Tema */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-amber-100/70 text-amber-700 shrink-0">
+          <div className="p-5 sm:p-6 rounded-[1.5rem] bg-m3-surface-container/50 border border-m3-outline-variant/30 flex items-start gap-4 transition-colors hover:bg-m3-surface-container">
+            <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-700 shrink-0">
               <Laptop className="w-5 h-5" />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <p className="text-xs font-bold text-slate-900">Tema Desain Sistem</p>
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
-                  Glassmorphism Modern
+                <p className="text-xs font-extrabold text-m3-on-surface">Tema Desain Sistem</p>
+                <span className="text-[9px] font-extrabold px-2.5 py-0.5 rounded-full bg-m3-primary/10 text-m3-primary border border-m3-primary/20 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" /> Material Design 3
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 leading-relaxed">
-                Antarmuka disesuaikan dengan standar desain Kurikulum Merdeka SMK Al-Azhar (Tailwind v4, Glassmorphism, & NeedMCP signature palettes).
+              <p className="text-[11px] font-medium text-m3-on-surface-variant leading-relaxed">
+                Antarmuka disesuaikan dengan standar desain Kurikulum Merdeka SMK Al-Azhar, menggunakan bahasa desain Material Design 3 dari Google untuk pengalaman yang lebih modern, bersih, dan intuitif.
               </p>
             </div>
           </div>

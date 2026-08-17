@@ -41,7 +41,7 @@ export const ForumTab: React.FC<ForumTabProps> = ({
       <ForumPostComposer onSubmit={onCreatePost} />
 
       {posts.length === 0 ? (
-        <div className="bg-white p-8 text-center text-slate-500 rounded-3xl border border-slate-200 shadow-xs">
+        <div className="bg-m3-surface p-10 text-center text-m3-on-surface-variant rounded-[2rem] border border-m3-outline-variant/30 shadow-m3-elevation-1 font-medium">
           Belum ada kiriman diskusi di ruang kelas ini. Jadilah yang pertama mengirim pesan!
         </div>
       ) : (
@@ -67,18 +67,18 @@ export const ForumTab: React.FC<ForumTabProps> = ({
               <button
                 type="button"
                 onClick={() => setShowAllPosts(!showAllPosts)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 shadow-xs transition-all cursor-pointer hover:border-indigo-200"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-m3-surface hover:bg-m3-surface-container border border-m3-outline-variant/50 text-xs font-bold text-m3-on-surface hover:text-m3-primary shadow-m3-elevation-1 hover:shadow-m3-elevation-2 transition-all duration-300 active:scale-95 cursor-pointer"
               >
-                <MessageSquare className="w-4 h-4 text-indigo-600" />
+                <MessageSquare className="w-4 h-4 text-m3-primary" />
                 {showAllPosts ? (
                   <>
                     <span>Tampilkan Lebih Ringkas (5 Teratas)</span>
-                    <ChevronUp className="w-4 h-4 text-slate-400" />
+                    <ChevronUp className="w-4 h-4 text-m3-on-surface-variant" />
                   </>
                 ) : (
                   <>
                     <span>Lihat Semua Diskusi Kelas ({posts.length} Postingan)</span>
-                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                    <ChevronDown className="w-4 h-4 text-m3-on-surface-variant" />
                   </>
                 )}
               </button>

@@ -46,49 +46,49 @@ export const QuizQuestionBuilder: React.FC<QuizQuestionBuilderProps> = ({ questi
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <label className="block text-xs font-bold text-slate-800">
+        <label className="block text-xs font-bold text-m3-on-surface-variant uppercase tracking-wider">
           Daftar Soal Pilihan Ganda ({questions.length} Butir)
         </label>
         <button
           type="button"
           onClick={handleAddQuestion}
-          className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-m3-primary hover:text-m3-primary/80 bg-m3-primary/10 hover:bg-m3-primary/20 px-3 py-2 rounded-full transition-colors cursor-pointer"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-4 h-4" />
           Tambah Soal
         </button>
       </div>
 
-      <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
+      <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1 custom-scrollbar">
         {questions.map((q, idx) => (
           <div
             key={idx}
-            className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3 relative"
+            className="p-5 bg-m3-surface-container rounded-[1.25rem] border border-m3-outline-variant/50 space-y-4 relative"
           >
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">
+              <div className="flex items-center gap-3">
+                <span className="w-7 h-7 rounded-full bg-m3-primary text-m3-on-primary font-bold text-xs flex items-center justify-center shadow-m3-elevation-1">
                   {idx + 1}
                 </span>
-                <span className="text-xs font-bold text-slate-700">Pertanyaan Soal</span>
+                <span className="text-sm font-bold text-m3-on-surface">Pertanyaan Soal</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                  <span className="text-[11px] text-slate-500 font-semibold">Poin:</span>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-m3-on-surface-variant font-bold uppercase tracking-wider">Poin:</span>
                   <input
                     type="number"
                     min={1}
                     max={100}
                     value={q.points}
                     onChange={(e) => handleQuestionChange(idx, 'points', Number(e.target.value))}
-                    className="w-14 text-xs font-bold bg-white border border-slate-200 rounded-lg px-2 py-1 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-16 text-sm font-bold bg-m3-surface border border-m3-outline-variant/50 rounded-xl px-2.5 py-1.5 focus:border-m3-primary focus:outline-none transition-colors text-center text-m3-on-surface"
                   />
                 </div>
                 {questions.length > 1 && (
                   <button
                     type="button"
                     onClick={() => handleRemoveQuestion(idx)}
-                    className="text-slate-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition"
+                    className="text-m3-on-surface-variant/50 hover:text-m3-error p-1.5 rounded-full hover:bg-m3-error-container/50 transition-colors cursor-pointer"
                     title="Hapus Soal"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -104,12 +104,12 @@ export const QuizQuestionBuilder: React.FC<QuizQuestionBuilderProps> = ({ questi
                 placeholder="Tuliskan pertanyaan / instruksi soal di sini..."
                 rows={2}
                 required
-                className="w-full text-xs bg-white border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition"
+                className="w-full text-sm bg-m3-surface border border-m3-outline-variant/50 rounded-xl p-3 text-m3-on-surface placeholder-m3-on-surface-variant/70 focus:outline-none focus:border-m3-primary transition-colors"
               />
             </div>
 
             {/* Options A, B, C, D */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               {(['A', 'B', 'C', 'D'] as const).map((optKey) => {
                 const fieldName = `option_${optKey.toLowerCase()}` as keyof QuizQuestionDraft;
                 const isCorrect = q.correct_option === optKey;
@@ -117,19 +117,19 @@ export const QuizQuestionBuilder: React.FC<QuizQuestionBuilderProps> = ({ questi
                 return (
                   <div
                     key={optKey}
-                    className={`flex items-center gap-2 p-2 rounded-xl border transition ${
+                    className={`flex items-center gap-3 p-2.5 rounded-xl border transition-colors ${
                       isCorrect
-                        ? 'bg-emerald-50/80 border-emerald-300 ring-1 ring-emerald-400/50'
-                        : 'bg-white border-slate-200'
+                        ? 'bg-emerald-500/10 border-emerald-500/50'
+                        : 'bg-m3-surface border-m3-outline-variant/50'
                     }`}
                   >
                     <button
                       type="button"
                       onClick={() => handleQuestionChange(idx, 'correct_option', optKey)}
-                      className={`w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center shrink-0 transition ${
+                      className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center shrink-0 transition-all cursor-pointer ${
                         isCorrect
-                          ? 'bg-emerald-600 text-white shadow-xs'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          ? 'bg-emerald-500 text-white shadow-m3-elevation-1'
+                          : 'bg-m3-surface-container-high text-m3-on-surface-variant hover:bg-m3-surface-variant hover:text-m3-on-surface'
                       }`}
                       title={isCorrect ? 'Kunci Jawaban Benar' : 'Jadikan Kunci Jawaban'}
                     >
@@ -141,13 +141,13 @@ export const QuizQuestionBuilder: React.FC<QuizQuestionBuilderProps> = ({ questi
                       onChange={(e) => handleQuestionChange(idx, fieldName, e.target.value)}
                       placeholder={`Pilihan ${optKey}...`}
                       required
-                      className="w-full text-xs bg-transparent focus:outline-none text-slate-800 placeholder:text-slate-400"
+                      className="w-full text-sm bg-transparent focus:outline-none text-m3-on-surface placeholder-m3-on-surface-variant/50"
                     />
                   </div>
                 );
               })}
             </div>
-            <p className="text-[10px] text-slate-400">
+            <p className="text-[11px] text-m3-on-surface-variant/70 italic font-medium">
               * Klik huruf opsi (A/B/C/D) untuk menandai kunci jawaban yang benar (berwarna hijau).
             </p>
           </div>

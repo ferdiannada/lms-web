@@ -128,26 +128,26 @@ export const ForumPostCard: React.FC<ForumPostCardProps> = ({
 
   return (
     <div
-      className={`bg-white p-5 sm:p-7 rounded-3xl border transition-all duration-200 shadow-xs space-y-4 hover:shadow-md ${
-        post.is_pinned ? 'border-amber-200/80 bg-gradient-to-b from-amber-50/20 to-white' : 'border-slate-200'
+      className={`bg-m3-surface p-5 sm:p-7 rounded-[1.5rem] border transition-all duration-200 shadow-m3-elevation-1 space-y-4 hover:shadow-m3-elevation-2 ${
+        post.is_pinned ? 'border-m3-tertiary/50 bg-m3-tertiary-container/10' : 'border-m3-outline-variant/30'
       }`}
     >
       {/* Pinned Post Pill */}
       {post.is_pinned && (
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold w-fit shadow-2xs">
-          <Pin className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-m3-tertiary-container text-m3-on-tertiary-container text-[11px] font-bold w-fit shadow-sm">
+          <Pin className="w-3.5 h-3.5" />
           <span>Pengumuman Penting Disematkan</span>
         </div>
       )}
 
       {/* Header: Author & Date */}
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-4 min-w-0">
           <div
-            className={`w-11 h-11 rounded-2xl font-black flex items-center justify-center text-sm shrink-0 shadow-xs ${
+            className={`w-12 h-12 rounded-[1rem] font-black flex items-center justify-center text-sm shrink-0 shadow-sm ${
               isPostTeacher
-                ? 'bg-gradient-to-tr from-emerald-600 to-teal-600 text-white'
-                : 'bg-gradient-to-tr from-[#1e1b4b] to-indigo-600 text-white'
+                ? 'bg-m3-secondary-container text-m3-on-secondary-container'
+                : 'bg-m3-primary-container text-m3-on-primary-container'
             }`}
           >
             {post.user_name.charAt(0).toUpperCase()}
@@ -155,29 +155,29 @@ export const ForumPostCard: React.FC<ForumPostCardProps> = ({
 
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-extrabold text-sm text-slate-900 truncate">
+              <span className="font-extrabold text-sm text-m3-on-surface truncate">
                 {isPostAuthor ? 'Anda' : post.user_name}
               </span>
               <span
-                className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1 ${
+                className={`text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1 ${
                   isPostTeacher
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                    ? 'bg-m3-secondary-container text-m3-on-secondary-container'
+                    : 'bg-m3-primary-container text-m3-on-primary-container'
                 }`}
               >
                 {isPostTeacher ? (
                   <>
-                    <ShieldCheck className="w-3 h-3 text-emerald-600" /> Guru
+                    <ShieldCheck className="w-3 h-3" /> Guru
                   </>
                 ) : (
                   <>
-                    <GraduationCap className="w-3 h-3 text-indigo-600" /> Siswa
+                    <GraduationCap className="w-3 h-3" /> Siswa
                   </>
                 )}
               </span>
             </div>
 
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="text-[11px] text-m3-on-surface-variant font-medium mt-1">
               {new Date(post.created_at).toLocaleString('id-ID', {
                 dateStyle: 'medium',
                 timeStyle: 'short',
@@ -194,7 +194,7 @@ export const ForumPostCard: React.FC<ForumPostCardProps> = ({
                 type="button"
                 onClick={handleStartEditPost}
                 title="Edit Postingan"
-                className="p-1.5 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer"
+                className="p-2 rounded-xl text-m3-on-surface-variant hover:text-m3-primary hover:bg-m3-surface-container transition-colors cursor-pointer active:scale-95"
               >
                 <Pencil className="w-4 h-4" />
               </button>
@@ -203,7 +203,7 @@ export const ForumPostCard: React.FC<ForumPostCardProps> = ({
               type="button"
               onClick={() => onDeletePost(post.id)}
               title="Hapus Postingan"
-              className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              className="p-2 rounded-xl text-m3-on-surface-variant hover:text-m3-error hover:bg-m3-error-container transition-colors cursor-pointer active:scale-95"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -213,19 +213,19 @@ export const ForumPostCard: React.FC<ForumPostCardProps> = ({
 
       {/* Post Content or Inline Edit */}
       {isEditingPost ? (
-        <div className="space-y-3 p-4 rounded-2xl bg-slate-50 border border-indigo-200">
+        <div className="space-y-3 p-4 rounded-[1.25rem] bg-m3-surface-container-highest border border-m3-outline-variant/50">
           <textarea
             value={editPostText}
             onChange={(e) => setEditPostText(e.target.value)}
             rows={3}
-            className="w-full bg-white border border-slate-300 rounded-xl p-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-600 resize-none shadow-2xs"
+            className="w-full bg-m3-surface border-2 border-transparent rounded-xl p-3 text-sm text-m3-on-surface placeholder-m3-on-surface-variant focus:outline-none focus:border-m3-primary resize-none transition-all shadow-sm"
             placeholder="Tulis editan postingan..."
           />
           <div className="flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={handleCancelEditPost}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-colors cursor-pointer flex items-center gap-1.5"
+              className="px-4 py-2 rounded-full text-xs font-bold text-m3-on-surface-variant hover:text-m3-on-surface hover:bg-m3-surface-variant transition-colors cursor-pointer flex items-center gap-1.5 active:scale-95"
             >
               <X className="w-3.5 h-3.5" /> Batal
             </button>
@@ -233,7 +233,7 @@ export const ForumPostCard: React.FC<ForumPostCardProps> = ({
               type="button"
               onClick={handleSavePost}
               disabled={isSavingPost || !editPostText.trim()}
-              className="px-4 py-1.5 rounded-xl text-xs font-bold bg-[#1e1b4b] hover:bg-slate-900 text-white shadow-sm transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+              className="px-5 py-2 rounded-full text-xs font-bold bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary shadow-m3-elevation-1 transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50 active:scale-95"
             >
               <Check className="w-3.5 h-3.5" /> {isSavingPost ? 'Menyimpan...' : 'Simpan Perubahan'}
             </button>
@@ -242,7 +242,7 @@ export const ForumPostCard: React.FC<ForumPostCardProps> = ({
       ) : (
         <div className="space-y-2">
           <p
-            className={`text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-wrap ${
+            className={`text-sm text-m3-on-surface leading-relaxed whitespace-pre-wrap ${
               !isExpandedPost && isLongContent ? 'line-clamp-3' : ''
             }`}
           >
@@ -253,7 +253,7 @@ export const ForumPostCard: React.FC<ForumPostCardProps> = ({
             <button
               type="button"
               onClick={() => setIsExpandedPost(!isExpandedPost)}
-              className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors cursor-pointer py-0.5"
+              className="text-xs font-bold text-m3-primary hover:text-m3-primary/80 flex items-center gap-1 transition-colors cursor-pointer py-1"
             >
               {isExpandedPost ? (
                 <>
@@ -272,18 +272,18 @@ export const ForumPostCard: React.FC<ForumPostCardProps> = ({
       )}
 
       {/* Interactive Action Toolbar (Reactions & Comments Toggle) */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-m3-outline-variant/30">
         <div className="flex items-center gap-2">
           {/* Suka Reaction Button */}
           <button
             type="button"
             onClick={() => onToggleReaction(post.id, 'like')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 text-xs font-bold text-slate-700 border border-slate-200 hover:border-indigo-200 transition-all cursor-pointer shadow-2xs active:scale-95"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-m3-surface-container hover:bg-m3-secondary-container hover:text-m3-on-secondary-container text-xs font-bold text-m3-on-surface-variant transition-all cursor-pointer shadow-sm active:scale-95 border border-m3-outline-variant/20"
           >
-            <ThumbsUp className="w-3.5 h-3.5 text-indigo-600" />
+            <ThumbsUp className="w-4 h-4 text-m3-primary" />
             <span>Suka</span>
             {likeCount > 0 && (
-              <span className="ml-0.5 px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-800 text-[10px]">
+              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-m3-primary-container text-m3-on-primary-container text-[10px]">
                 {likeCount}
               </span>
             )}
@@ -293,12 +293,12 @@ export const ForumPostCard: React.FC<ForumPostCardProps> = ({
           <button
             type="button"
             onClick={() => onToggleReaction(post.id, 'fire')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-amber-50 hover:text-amber-800 text-xs font-bold text-slate-700 border border-slate-200 hover:border-amber-200 transition-all cursor-pointer shadow-2xs active:scale-95"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-m3-surface-container hover:bg-m3-tertiary-container hover:text-m3-on-tertiary-container text-xs font-bold text-m3-on-surface-variant transition-all cursor-pointer shadow-sm active:scale-95 border border-m3-outline-variant/20"
           >
-            <Flame className="w-3.5 h-3.5 text-amber-500" />
+            <Flame className="w-4 h-4 text-m3-tertiary" />
             <span>Semangat</span>
             {fireCount > 0 && (
-              <span className="ml-0.5 px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-900 text-[10px]">
+              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-m3-tertiary-container text-m3-on-tertiary-container text-[10px]">
                 {fireCount}
               </span>
             )}
@@ -308,13 +308,13 @@ export const ForumPostCard: React.FC<ForumPostCardProps> = ({
           <button
             type="button"
             onClick={handleCopyLink}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200 transition text-xs cursor-pointer shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-m3-surface-container hover:bg-m3-surface-variant text-m3-on-surface-variant hover:text-m3-on-surface transition-all text-xs font-medium cursor-pointer shadow-sm active:scale-95 border border-m3-outline-variant/20"
             title="Salin Link Diskusi"
           >
             {copiedLink ? (
-              <Check className="w-3.5 h-3.5 text-emerald-600" />
+              <Check className="w-4 h-4 text-m3-primary" />
             ) : (
-              <Share2 className="w-3.5 h-3.5" />
+              <Share2 className="w-4 h-4" />
             )}
             <span className="text-[11px] hidden sm:inline">{copiedLink ? 'Tersalin' : 'Bagikan'}</span>
           </button>
@@ -324,19 +324,19 @@ export const ForumPostCard: React.FC<ForumPostCardProps> = ({
         <button
           type="button"
           onClick={() => setIsCommentsOpen(!isCommentsOpen)}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 py-1 px-2 rounded-xl transition cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-m3-on-surface-variant hover:text-m3-primary hover:bg-m3-surface-container py-2 px-3 rounded-full transition-all cursor-pointer active:scale-95"
         >
-          <MessageSquare className="w-3.5 h-3.5 text-indigo-600" />
+          <MessageSquare className="w-4 h-4 text-m3-primary" />
           <span>{totalComments} Komentar</span>
           {totalComments > 0 && (
-            isCommentsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            isCommentsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
           )}
         </button>
       </div>
 
       {/* Collapsible Comments Section */}
       {isCommentsOpen && (
-        <div className="space-y-3 pt-3 border-t border-slate-100 animate-in fade-in">
+        <div className="space-y-4 pt-4 border-t border-m3-outline-variant/30 animate-in fade-in">
           {totalComments > 0 && (
             <ForumCommentTree
               postId={post.id}
@@ -352,20 +352,20 @@ export const ForumPostCard: React.FC<ForumPostCardProps> = ({
 
           {/* Toggle Show All Comments Button */}
           {totalComments > 2 && (
-            <div className="pt-1">
+            <div className="pt-2">
               <button
                 type="button"
                 onClick={() => setShowAllComments(!showAllComments)}
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1.5 py-1 px-3 rounded-xl bg-indigo-50/50 hover:bg-indigo-50 transition-colors cursor-pointer"
+                className="text-xs font-bold text-m3-primary hover:text-m3-primary/80 flex items-center gap-1.5 py-1.5 px-4 rounded-full bg-m3-primary-container/50 hover:bg-m3-primary-container transition-colors cursor-pointer active:scale-95"
               >
                 {showAllComments ? (
                   <>
-                    <ChevronUp className="w-3.5 h-3.5" />
+                    <ChevronUp className="w-4 h-4" />
                     <span>Ciutkan Komentar (Tampilkan 2 Teratas)</span>
                   </>
                 ) : (
                   <>
-                    <ChevronDown className="w-3.5 h-3.5" />
+                    <ChevronDown className="w-4 h-4" />
                     <span>Lihat Semua {totalComments} Komentar</span>
                   </>
                 )}
@@ -374,29 +374,29 @@ export const ForumPostCard: React.FC<ForumPostCardProps> = ({
           )}
 
           {/* Inline Comment Composer */}
-          <div className="space-y-2 pt-2">
+          <div className="space-y-3 pt-3">
             {replyTarget && (
-              <div className="flex items-center justify-between px-3.5 py-1.5 rounded-2xl bg-indigo-50 border border-indigo-100 text-xs text-indigo-800 animate-in fade-in">
-                <span className="flex items-center gap-1.5 font-medium">
-                  <CornerDownRight className="w-3.5 h-3.5 text-indigo-600" />
+              <div className="flex items-center justify-between px-4 py-2 rounded-xl bg-m3-secondary-container text-xs text-m3-on-secondary-container animate-in fade-in">
+                <span className="flex items-center gap-2 font-medium">
+                  <CornerDownRight className="w-4 h-4" />
                   Membalas komentar{' '}
-                  <strong className="text-slate-900">
+                  <strong className="font-bold">
                     {replyTarget.authorName === user?.name ? 'Anda sendiri' : `@${replyTarget.authorName}`}
                   </strong>
                 </span>
                 <button
                   type="button"
                   onClick={() => setReplyTarget(null)}
-                  className="p-1 hover:bg-indigo-100 rounded-lg text-indigo-600 hover:text-slate-900 transition-colors cursor-pointer"
+                  className="p-1 hover:bg-m3-secondary/20 rounded-full text-m3-on-secondary-container transition-colors cursor-pointer"
                   title="Batal membalas"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             )}
 
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 font-bold flex items-center justify-center text-xs shrink-0 border border-slate-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-[0.8rem] bg-m3-surface-variant text-m3-on-surface-variant font-bold flex items-center justify-center text-xs shrink-0 shadow-sm">
                 {user?.name?.charAt(0).toUpperCase() || 'U'}
               </div>
               <input
@@ -407,16 +407,16 @@ export const ForumPostCard: React.FC<ForumPostCardProps> = ({
                   if (e.key === 'Enter') handleSubmitComment();
                 }}
                 placeholder={replyTarget ? `Balas @${replyTarget.authorName}...` : 'Tulis komentar atau tanggapan Anda...'}
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white shadow-2xs transition"
+                className="flex-1 bg-m3-surface-container-highest border border-m3-outline-variant/30 rounded-full px-5 py-3 text-xs sm:text-sm text-m3-on-surface placeholder-m3-on-surface-variant focus:outline-none focus:border-m3-primary focus:bg-m3-surface shadow-sm transition-all"
               />
               <button
                 type="button"
                 onClick={handleSubmitComment}
                 disabled={!commentInput.trim() || isAddingComment}
-                className="px-4 py-2.5 bg-[#1e1b4b] hover:bg-slate-900 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-40 flex items-center gap-1.5"
+                className="px-5 py-3 bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary font-bold text-xs rounded-full shadow-m3-elevation-1 hover:shadow-m3-elevation-2 transition-all cursor-pointer disabled:opacity-40 flex items-center gap-1.5 active:scale-95 shrink-0"
                 title="Kirim Komentar"
               >
-                <Send className="w-3.5 h-3.5" />
+                <Send className="w-4 h-4" />
                 <span className="hidden sm:inline">Kirim</span>
               </button>
             </div>

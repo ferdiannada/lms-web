@@ -54,17 +54,17 @@ export const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({ stats,
         <Link
           key={idx}
           to={card.link}
-          className="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs hover:shadow-md transition flex flex-col justify-between group"
+          className="p-5 rounded-[28px] bg-m3-surface border border-m3-outline-variant/30 shadow-m3-elevation-1 hover:shadow-m3-elevation-2 transition-all duration-300 ease-m3-standard flex flex-col justify-between group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500">{card.title}</span>
-            <div className={`p-2.5 rounded-2xl ${card.bg} group-hover:scale-110 transition-transform`}>
+            <span className="text-xs font-bold text-m3-on-surface-variant">{card.title}</span>
+            <div className={`p-2.5 rounded-2xl ${card.bg} group-hover:scale-110 transition-transform duration-300 ease-m3-standard`}>
               {card.icon}
             </div>
           </div>
-          <div className="mt-3">
-            <span className="text-2xl lg:text-3xl font-black text-slate-900">{card.count}</span>
-            <p className="text-[11px] text-slate-400 font-medium mt-0.5">{card.subtitle}</p>
+          <div className="mt-4">
+            <span className="text-2xl lg:text-3xl font-black text-m3-on-surface">{card.count}</span>
+            <p className="text-[11px] text-m3-on-surface-variant font-medium mt-1">{card.subtitle}</p>
           </div>
         </Link>
       ))}

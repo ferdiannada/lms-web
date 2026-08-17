@@ -116,17 +116,17 @@ export const DashboardCalendar: React.FC<DashboardCalendarProps> = ({
   };
 
   return (
-    <div className="bg-white p-5 lg:p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+    <div className="bg-m3-surface p-6 lg:p-8 rounded-[2rem] border border-m3-outline-variant/30 shadow-m3-elevation-1 space-y-5 transition-all duration-300">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <CalendarIcon className="w-5 h-5 text-indigo-600" />
-          <h2 className="text-sm font-black text-slate-900 capitalize">{monthName}</h2>
+        <div className="flex items-center gap-2.5">
+          <CalendarIcon className="w-5 h-5 text-m3-primary" />
+          <h2 className="text-sm font-extrabold text-m3-on-surface capitalize tracking-tight">{monthName}</h2>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={onPrevMonth}
-            className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-600 transition"
+            className="p-2 rounded-full hover:bg-m3-surface-variant text-m3-on-surface-variant transition-colors cursor-pointer"
             title="Bulan Sebelumnya"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -134,7 +134,7 @@ export const DashboardCalendar: React.FC<DashboardCalendarProps> = ({
           <button
             type="button"
             onClick={onNextMonth}
-            className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-600 transition"
+            className="p-2 rounded-full hover:bg-m3-surface-variant text-m3-on-surface-variant transition-colors cursor-pointer"
             title="Bulan Berikutnya"
           >
             <ChevronRight className="w-4 h-4" />
@@ -143,16 +143,16 @@ export const DashboardCalendar: React.FC<DashboardCalendarProps> = ({
       </div>
 
       {/* Weekday headers */}
-      <div className="grid grid-cols-7 gap-1 text-center">
+      <div className="grid grid-cols-7 gap-1.5 text-center">
         {['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'].map((day, idx) => (
-          <span key={idx} className="text-[10px] font-bold text-slate-400 uppercase py-1">
+          <span key={idx} className="text-[10px] font-extrabold text-m3-on-surface-variant uppercase py-1">
             {day}
           </span>
         ))}
       </div>
 
       {/* Day grids */}
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-1.5">
         {calendarDays.map((item, idx) => {
           const selected = isSelected(item.date);
           const today = isToday(item.date);
@@ -162,21 +162,21 @@ export const DashboardCalendar: React.FC<DashboardCalendarProps> = ({
               key={idx}
               type="button"
               onClick={() => onDateSelect(item.date)}
-              className={`h-9 rounded-xl flex flex-col items-center justify-center text-xs font-semibold relative transition ${
+              className={`h-10 rounded-2xl flex flex-col items-center justify-center text-xs relative transition-all duration-300 ease-out cursor-pointer ${
                 selected
-                  ? 'bg-[#1e1b4b] text-white shadow-xs font-bold'
+                  ? 'bg-[#1e1b4b] text-white shadow-m3-elevation-1 font-bold scale-105'
                   : today
-                  ? 'bg-indigo-50 text-indigo-700 font-black border border-indigo-200'
+                  ? 'bg-m3-primary/10 text-m3-primary font-black border border-m3-primary/20'
                   : item.isCurrentMonth
-                  ? 'text-slate-800 hover:bg-slate-100'
-                  : 'text-slate-300 hover:bg-slate-50'
+                  ? 'text-m3-on-surface font-semibold hover:bg-m3-surface-container-high'
+                  : 'text-m3-on-surface-variant/40 font-medium hover:bg-m3-surface-container'
               }`}
             >
               <span>{item.date.getDate()}</span>
               {item.hasEvent && (
                 <span
-                  className={`w-1 h-1 rounded-full absolute bottom-1 ${
-                    selected ? 'bg-amber-400' : 'bg-indigo-600'
+                  className={`w-1.5 h-1.5 rounded-full absolute bottom-1.5 ${
+                    selected ? 'bg-amber-400 shadow-xs' : 'bg-m3-primary'
                   }`}
                 ></span>
               )}
@@ -187,9 +187,9 @@ export const DashboardCalendar: React.FC<DashboardCalendarProps> = ({
 
       {/* Selected Day Agenda */}
       {selectedDate && (
-        <div className="pt-3 border-t border-slate-100 space-y-2">
+        <div className="pt-4 border-t border-m3-outline-variant/30 space-y-3">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-slate-800">
+            <span className="font-extrabold text-m3-on-surface">
               Agenda:{' '}
               {selectedDate.toLocaleDateString('id-ID', {
                 weekday: 'short',
@@ -197,34 +197,34 @@ export const DashboardCalendar: React.FC<DashboardCalendarProps> = ({
                 month: 'short',
               })}
             </span>
-            <span className="text-[10px] font-semibold text-slate-400">
+            <span className="text-[10px] font-bold text-m3-on-surface-variant bg-m3-surface-container px-2 py-0.5 rounded-md">
               {selectedDateTasks.length} Agenda
             </span>
           </div>
 
           {selectedDateTasks.length === 0 ? (
-            <p className="text-[11px] text-slate-400 italic py-1">
+            <p className="text-[11px] font-medium text-m3-on-surface-variant/70 italic py-2 text-center bg-m3-surface-container/30 rounded-xl border border-m3-outline-variant/30 border-dashed">
               Tidak ada tenggat tugas atau jadwal ujian pada tanggal ini.
             </p>
           ) : (
-            <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
               {selectedDateTasks.map((t) => (
                 <Link
                   key={t.id}
                   to={`/classes/${t.classId}`}
-                  className="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-100 flex items-center justify-between gap-2 text-xs transition group"
+                  className="p-3 rounded-xl bg-m3-surface-container hover:bg-m3-surface-container-high border border-m3-outline-variant/30 flex items-center justify-between gap-3 text-xs transition-colors group"
                 >
                   <div className="min-w-0">
-                    <p className="font-bold text-slate-800 truncate group-hover:text-indigo-600">
+                    <p className="font-bold text-m3-on-surface truncate group-hover:text-m3-primary transition-colors">
                       {t.title}
                     </p>
-                    <p className="text-[10px] text-slate-400 truncate">{t.className}</p>
+                    <p className="text-[10px] font-medium text-m3-on-surface-variant truncate mt-0.5">{t.className}</p>
                   </div>
                   <span
-                    className={`text-[9px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                    className={`text-[9px] font-extrabold px-2.5 py-1 rounded-full shrink-0 ${
                       t.isCompleted
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-rose-100 text-rose-700'
+                        ? 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20'
+                        : 'bg-rose-500/10 text-rose-700 border border-rose-500/20'
                     }`}
                   >
                     {t.isCompleted ? 'Selesai' : 'Belum Selesai'}

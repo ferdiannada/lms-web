@@ -93,10 +93,10 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl border transition-all text-left text-sm ${
+        className={`w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl border transition-all text-left text-sm ${
           isOpen
-            ? 'bg-white border-indigo-600 ring-2 ring-indigo-100 text-slate-900 shadow-sm'
-            : 'bg-white hover:bg-slate-50 border-slate-300 text-slate-800 hover:border-slate-400 shadow-xs'
+            ? 'bg-m3-surface border-m3-primary ring-2 ring-m3-primary/20 text-m3-on-surface shadow-none'
+            : 'bg-m3-surface hover:bg-m3-surface-variant border-m3-outline text-m3-on-surface hover:border-m3-on-surface shadow-none'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       >
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -150,7 +150,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
 
       {/* Dropdown Menu (Select2 Style) */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-m3-surface-container rounded-2xl shadow-m3-elevation-2 overflow-hidden animate-in fade-in zoom-in-95 duration-150 border-none">
           {/* Search Box Header */}
           <div className="p-2.5 border-b border-slate-100 bg-slate-50">
             <div className="relative">
@@ -192,18 +192,18 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                     onClick={() => handleSelect(opt.value)}
                     className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-left transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-[#1e1b4b] text-white font-bold shadow-xs'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                        ? 'bg-m3-secondary-container text-m3-on-secondary-container font-bold shadow-none'
+                        : 'text-m3-on-surface hover:bg-m3-surface-variant'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <span className="text-xs truncate">{opt.label}</span>
+                      <span className="text-xs truncate font-bold">{opt.label}</span>
                       {opt.badge && (
                         <span
                           className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase shrink-0 ${
                             isSelected
-                              ? 'bg-white/20 text-white'
-                              : 'bg-indigo-50 text-indigo-700 border border-indigo-100'
+                              ? 'bg-m3-on-secondary-container/10 text-m3-on-secondary-container border border-m3-on-secondary-container/20'
+                              : 'bg-m3-primary/10 text-m3-primary border border-m3-primary/20'
                           }`}
                         >
                           {opt.badge}
@@ -215,13 +215,13 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                       {opt.subLabel && (
                         <span
                           className={`text-[11px] ${
-                            isSelected ? 'text-indigo-100' : 'text-slate-400'
+                            isSelected ? 'text-m3-on-secondary-container/80' : 'text-m3-on-surface-variant'
                           }`}
                         >
                           {opt.subLabel}
                         </span>
                       )}
-                      {isSelected && <Check className="w-4 h-4 text-white shrink-0" />}
+                      {isSelected && <Check className="w-4 h-4 text-m3-on-secondary-container shrink-0" />}
                     </div>
                   </button>
                 );

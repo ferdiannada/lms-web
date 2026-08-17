@@ -16,13 +16,13 @@ interface ClassTabsNavProps {
 
 export const ClassTabsNav: React.FC<ClassTabsNavProps> = ({ activeTab, onTabChange, counts }) => {
   return (
-    <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
+    <div className="flex items-center gap-2 border-b border-m3-outline-variant/30 overflow-x-auto overflow-y-hidden py-2 px-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <button
         onClick={() => onTabChange('forum')}
-        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shrink-0 ${
+        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs transition-all duration-500 ease-m3-standard active:scale-90 cursor-pointer shrink-0 ${
           activeTab === 'forum'
-            ? 'bg-[#1e1b4b] text-white shadow-xs'
-            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            ? 'bg-[#1e1b4b] text-white shadow-md scale-105'
+            : 'text-m3-on-surface-variant hover:text-m3-on-surface hover:bg-m3-surface-container'
         }`}
       >
         <MessageSquare className="w-4 h-4" /> Forum Diskusi
@@ -30,10 +30,10 @@ export const ClassTabsNav: React.FC<ClassTabsNavProps> = ({ activeTab, onTabChan
 
       <button
         onClick={() => onTabChange('materi')}
-        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shrink-0 ${
+        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs transition-all duration-500 ease-m3-standard active:scale-90 cursor-pointer shrink-0 ${
           activeTab === 'materi'
-            ? 'bg-[#1e1b4b] text-white shadow-xs'
-            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            ? 'bg-[#1e1b4b] text-white shadow-md scale-105'
+            : 'text-m3-on-surface-variant hover:text-m3-on-surface hover:bg-m3-surface-container'
         }`}
       >
         <BookOpen className="w-4 h-4" /> Modul & Materi ({counts.materials})
@@ -41,10 +41,10 @@ export const ClassTabsNav: React.FC<ClassTabsNavProps> = ({ activeTab, onTabChan
 
       <button
         onClick={() => onTabChange('tugas')}
-        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shrink-0 ${
+        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs transition-all duration-500 ease-m3-standard active:scale-90 cursor-pointer shrink-0 ${
           activeTab === 'tugas'
-            ? 'bg-[#1e1b4b] text-white shadow-xs'
-            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            ? 'bg-[#1e1b4b] text-white shadow-md scale-105'
+            : 'text-m3-on-surface-variant hover:text-m3-on-surface hover:bg-m3-surface-container'
         }`}
       >
         <FileText className="w-4 h-4" /> Tugas & Evaluasi ({counts.assignments})
@@ -52,10 +52,10 @@ export const ClassTabsNav: React.FC<ClassTabsNavProps> = ({ activeTab, onTabChan
 
       <button
         onClick={() => onTabChange('kuis')}
-        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shrink-0 ${
+        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs transition-all duration-500 ease-m3-standard active:scale-90 cursor-pointer shrink-0 ${
           activeTab === 'kuis'
-            ? 'bg-[#1e1b4b] text-white shadow-xs'
-            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            ? 'bg-[#1e1b4b] text-white shadow-md scale-105'
+            : 'text-m3-on-surface-variant hover:text-m3-on-surface hover:bg-m3-surface-container'
         }`}
       >
         <HelpCircle className="w-4 h-4" /> Ujian & Kuis ({counts.quizzes})
@@ -63,10 +63,10 @@ export const ClassTabsNav: React.FC<ClassTabsNavProps> = ({ activeTab, onTabChan
 
       <button
         onClick={() => onTabChange('anggota')}
-        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shrink-0 ${
+        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs transition-all duration-500 ease-m3-standard active:scale-90 cursor-pointer shrink-0 ${
           activeTab === 'anggota'
-            ? 'bg-[#1e1b4b] text-white shadow-xs'
-            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            ? 'bg-[#1e1b4b] text-white shadow-md scale-105'
+            : 'text-m3-on-surface-variant hover:text-m3-on-surface hover:bg-m3-surface-container'
         }`}
       >
         <Users className="w-4 h-4" /> Anggota Kelas ({counts.members})

@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
@@ -24,14 +24,28 @@ const PageLoader: React.FC = () => (
   </div>
 );
 
+const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
+  return (
+    <div key={location.pathname} className="animate-m3-enter w-full h-full">
+      {children}
+    </div>
+  );
+};
+
 const ProtectedLayout: React.FC = () => {
   const { user, isLoading } = useAuth();
+  const [isScrolled, setIsScrolled] = React.useState(false);
+
+  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+    setIsScrolled(e.currentTarget.scrollTop > 10);
+  };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-slate-600">
+      <div className="min-h-screen bg-m3-surface-container flex items-center justify-center text-m3-on-surface">
         <div className="text-center space-y-3">
-          <div className="inline-block w-9 h-9 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="inline-block w-9 h-9 border-4 border-m3-primary border-t-transparent rounded-full animate-spin"></div>
           <p className="text-sm font-semibold">Memuat aplikasi PEDIA LMS...</p>
         </div>
       </div>
@@ -43,24 +57,29 @@ const ProtectedLayout: React.FC = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-[#f8fafc] text-slate-900 overflow-hidden">
-      <Navbar />
-      <div className="flex flex-1 overflow-hidden min-h-0">
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 p-3 sm:p-4 lg:p-6 xl:p-8">
-          <div className="max-w-[1600px] mx-auto w-full pb-20 md:pb-12">
+    <div className="h-screen flex bg-m3-surface text-m3-on-surface overflow-hidden">
+      <Sidebar />
+      <div className="flex flex-col flex-1 overflow-hidden min-w-0 relative">
+        <Navbar isScrolled={isScrolled} />
+        <main 
+          className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 relative"
+          onScroll={handleScroll}
+        >
+          <div className="max-w-[1600px] mx-auto w-full px-4 sm:px-6 lg:px-8 pt-24 pb-20 md:pb-12">
             <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/classes" element={<ClassList />} />
-                <Route path="/classes/:id" element={<ClassDetail />} />
-                <Route path="/assignments" element={<AssignmentsPage />} />
-                <Route path="/quizzes" element={<QuizzesPage />} />
-                <Route path="/quiz/:id" element={<QuizPlayer />} />
-                <Route path="/grades" element={<GradebookPage />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+              <PageTransition>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/classes" element={<ClassList />} />
+                  <Route path="/classes/:id" element={<ClassDetail />} />
+                  <Route path="/assignments" element={<AssignmentsPage />} />
+                  <Route path="/quizzes" element={<QuizzesPage />} />
+                  <Route path="/quiz/:id" element={<QuizPlayer />} />
+                  <Route path="/grades" element={<GradebookPage />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </PageTransition>
             </Suspense>
           </div>
         </main>

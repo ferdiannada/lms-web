@@ -59,14 +59,15 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Buat Ruang Kelas Baru">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl">
+          <div className="p-4 bg-m3-error-container/50 border border-m3-error/20 text-m3-on-error-container text-xs rounded-[1.25rem] font-medium flex items-center gap-2">
+            <svg className="w-4 h-4 text-m3-error shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             {error}
           </div>
         )}
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-slate-700 uppercase">
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-m3-on-surface-variant uppercase tracking-wider">
             Nama Mata Pelajaran / Kelas
           </label>
           <input
@@ -75,12 +76,12 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({
             onChange={(e) => setClassName(e.target.value)}
             required
             placeholder="Contoh: Pemrograman Web & Perangkat Bergerak"
-            className="w-full bg-white border border-slate-300 rounded-xl p-3 text-sm text-slate-900 focus:border-indigo-600 focus:outline-none"
+            className="w-full bg-m3-surface-container border border-m3-outline-variant/50 rounded-xl p-3 text-sm text-m3-on-surface placeholder-m3-on-surface-variant/70 focus:border-m3-primary focus:bg-m3-surface focus:outline-none transition-all duration-300"
           />
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-slate-700 uppercase">
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-m3-on-surface-variant uppercase tracking-wider">
             Pilih Rombongan Belajar (Dapodik)
           </label>
           <SearchableSelect
@@ -98,29 +99,29 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({
           />
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-slate-700 uppercase">Deskripsi Ringkas</label>
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-m3-on-surface-variant uppercase tracking-wider">Deskripsi Ringkas</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
             placeholder="Silabus dan target kompetensi pembelajaran..."
-            className="w-full bg-white border border-slate-300 rounded-xl p-3 text-sm text-slate-900 focus:border-indigo-600 focus:outline-none"
+            className="w-full bg-m3-surface-container border border-m3-outline-variant/50 rounded-xl p-3 text-sm text-m3-on-surface placeholder-m3-on-surface-variant/70 focus:border-m3-primary focus:bg-m3-surface focus:outline-none transition-all duration-300"
           />
         </div>
 
-        <div className="pt-2 flex justify-end gap-2">
+        <div className="pt-4 flex justify-end gap-3">
           <button
             type="button"
             onClick={handleClose}
-            className="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer"
+            className="px-5 py-2.5 text-xs font-bold text-m3-on-surface-variant hover:bg-m3-surface-container-high rounded-full transition-colors cursor-pointer"
           >
             Batal
           </button>
           <button
             type="submit"
             disabled={isSubmitting || !className.trim() || !selectedRombelId}
-            className="px-5 py-2.5 bg-[#1e1b4b] hover:bg-slate-900 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 transition-colors cursor-pointer disabled:opacity-50"
+            className="px-6 py-2.5 bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary font-bold text-xs rounded-full shadow-m3-elevation-1 hover:shadow-m3-elevation-2 transition-all duration-300 ease-out active:scale-95 cursor-pointer disabled:opacity-50 disabled:active:scale-100"
           >
             {isSubmitting ? 'Menyimpan...' : 'Simpan & Terbitkan Kelas'}
           </button>

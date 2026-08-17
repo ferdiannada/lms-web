@@ -302,54 +302,56 @@ export const ClassDetail: React.FC = () => {
       />
 
       {/* Tab Contents */}
-      {activeTab === 'forum' && (
-        <ForumTab
-          posts={posts}
-          user={user}
-          isTeacher={isTeacher}
-          onCreatePost={handleCreatePost}
-          onSaveEditPost={handleSaveEditPost}
-          onDeletePost={handleDeletePost}
-          onToggleReaction={handleToggleReaction}
-          onAddComment={handleAddComment}
-          onSaveEditComment={handleSaveEditComment}
-          onDeleteComment={handleDeleteComment}
-        />
-      )}
+      <div key={activeTab} className="animate-m3-enter">
+        {activeTab === 'forum' && (
+          <ForumTab
+            posts={posts}
+            user={user}
+            isTeacher={isTeacher}
+            onCreatePost={handleCreatePost}
+            onSaveEditPost={handleSaveEditPost}
+            onDeletePost={handleDeletePost}
+            onToggleReaction={handleToggleReaction}
+            onAddComment={handleAddComment}
+            onSaveEditComment={handleSaveEditComment}
+            onDeleteComment={handleDeleteComment}
+          />
+        )}
 
-      {activeTab === 'materi' && (
-        <MaterialsTab
-          materials={materials}
-          isTeacher={isTeacher}
-          onOpenUploadModal={() => setIsMaterialModalOpen(true)}
-          onDeleteMaterial={handleDeleteMaterial}
-        />
-      )}
+        {activeTab === 'materi' && (
+          <MaterialsTab
+            materials={materials}
+            isTeacher={isTeacher}
+            onOpenUploadModal={() => setIsMaterialModalOpen(true)}
+            onDeleteMaterial={handleDeleteMaterial}
+          />
+        )}
 
-      {activeTab === 'tugas' && (
-        <AssignmentsTab
-          assignments={assignments}
-          isTeacher={isTeacher}
-          onOpenCreateModal={() => setIsAssignmentModalOpen(true)}
-          onOpenSubmitModal={(asg) => {
-            setSelectedAsg(asg);
-            setIsSubmitModalOpen(true);
-          }}
-          onOpenSubmissionsList={handleOpenSubmissionsList}
-          onDeleteAssignment={handleDeleteAssignment}
-        />
-      )}
+        {activeTab === 'tugas' && (
+          <AssignmentsTab
+            assignments={assignments}
+            isTeacher={isTeacher}
+            onOpenCreateModal={() => setIsAssignmentModalOpen(true)}
+            onOpenSubmitModal={(asg) => {
+              setSelectedAsg(asg);
+              setIsSubmitModalOpen(true);
+            }}
+            onOpenSubmissionsList={handleOpenSubmissionsList}
+            onDeleteAssignment={handleDeleteAssignment}
+          />
+        )}
 
-      {activeTab === 'kuis' && (
-        <QuizzesTab
-          quizzes={quizzes}
-          isTeacher={isTeacher}
-          onOpenCreateModal={() => setIsQuizModalOpen(true)}
-          onDeleteQuiz={handleDeleteQuiz}
-        />
-      )}
+        {activeTab === 'kuis' && (
+          <QuizzesTab
+            quizzes={quizzes}
+            isTeacher={isTeacher}
+            onOpenCreateModal={() => setIsQuizModalOpen(true)}
+            onDeleteQuiz={handleDeleteQuiz}
+          />
+        )}
 
-      {activeTab === 'anggota' && <MembersTab members={members} />}
+        {activeTab === 'anggota' && <MembersTab members={members} />}
+      </div>
 
       {/* Shared Modals */}
       <MaterialUploadModal

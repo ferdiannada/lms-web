@@ -120,21 +120,21 @@ export const QuizCreateModal: React.FC<QuizCreateModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Buat Kuis & Ujian Pilihan Ganda">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {errorMsg && (
-          <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="p-4 bg-m3-error-container/50 border border-m3-error/20 text-m3-on-error-container text-xs rounded-[1.25rem] font-medium flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-m3-error" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {classes.length > 1 && !defaultClassId && (
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">Target Kelas</label>
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-m3-on-surface-variant uppercase tracking-wider">Target Kelas</label>
             <select
               value={targetClassId}
               onChange={(e) => setTargetClassId(e.target.value)}
-              className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition"
+              className="w-full bg-m3-surface-container border border-m3-outline-variant/50 rounded-xl p-3 text-sm text-m3-on-surface focus:border-m3-primary focus:bg-m3-surface focus:outline-none transition-all duration-300 appearance-none"
               required
             >
               <option value="">Pilih Kelas</option>
@@ -147,32 +147,32 @@ export const QuizCreateModal: React.FC<QuizCreateModalProps> = ({
           </div>
         )}
 
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1.5">Judul Kuis *</label>
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-m3-on-surface-variant uppercase tracking-wider">Judul Kuis *</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Contoh: Kuis Harian 1 - Dasar Algoritma"
             required
-            className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition"
+            className="w-full bg-m3-surface-container border border-m3-outline-variant/50 rounded-xl p-3 text-sm text-m3-on-surface placeholder-m3-on-surface-variant/70 focus:border-m3-primary focus:bg-m3-surface focus:outline-none transition-all duration-300"
           />
         </div>
 
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1.5">Deskripsi / Petunjuk Pengerjaan</label>
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-m3-on-surface-variant uppercase tracking-wider">Deskripsi / Petunjuk Pengerjaan</label>
           <textarea
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
             placeholder="Tulis instruksi pengerjaan untuk siswa..."
             rows={2}
-            className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition"
+            className="w-full bg-m3-surface-container border border-m3-outline-variant/50 rounded-xl p-3 text-sm text-m3-on-surface placeholder-m3-on-surface-variant/70 focus:border-m3-primary focus:bg-m3-surface focus:outline-none transition-all duration-300"
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">Durasi Waktu (Menit) *</label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-m3-on-surface-variant uppercase tracking-wider">Durasi Waktu (Menit) *</label>
             <div className="relative">
               <input
                 type="number"
@@ -181,45 +181,45 @@ export const QuizCreateModal: React.FC<QuizCreateModalProps> = ({
                 value={durationMinutes}
                 onChange={(e) => setDurationMinutes(Number(e.target.value))}
                 required
-                className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3.5 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition"
+                className="w-full bg-m3-surface-container border border-m3-outline-variant/50 rounded-xl p-3 pl-10 text-sm text-m3-on-surface focus:border-m3-primary focus:bg-m3-surface focus:outline-none transition-all duration-300"
               />
-              <Clock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <Clock className="w-4 h-4 text-m3-on-surface-variant absolute left-3.5 top-3.5" />
             </div>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">Batas Akhir (Opsional)</label>
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-m3-on-surface-variant uppercase tracking-wider">Batas Akhir (Opsional)</label>
             <input
               type="datetime-local"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition"
+              className="w-full bg-m3-surface-container border border-m3-outline-variant/50 rounded-xl p-3 text-sm text-m3-on-surface focus:border-m3-primary focus:bg-m3-surface focus:outline-none transition-all duration-300"
             />
           </div>
         </div>
 
         {/* Dynamic Question List */}
-        <div className="pt-2 border-t border-slate-100">
+        <div className="pt-2">
           <QuizQuestionBuilder questions={questions} onChange={setQuestions} />
         </div>
 
-        <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
+        <div className="pt-4 flex justify-end gap-3">
           <button
             type="button"
             onClick={handleClose}
             disabled={isCreating}
-            className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+            className="px-5 py-2.5 text-xs font-bold text-m3-on-surface-variant hover:bg-m3-surface-container-high rounded-full transition-colors cursor-pointer"
           >
             Batal
           </button>
           <button
             type="submit"
             disabled={isCreating}
-            className="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 rounded-xl shadow-sm hover:shadow transition flex items-center gap-1.5"
+            className="px-6 py-2.5 bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary font-bold text-xs rounded-full shadow-m3-elevation-1 hover:shadow-m3-elevation-2 transition-all duration-300 ease-out active:scale-95 cursor-pointer disabled:opacity-50 disabled:active:scale-100 flex items-center gap-2"
           >
             {isCreating ? (
               <>
-                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Menyimpan Kuis...</span>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span>Menyimpan...</span>
               </>
             ) : (
               'Terbitkan Kuis'

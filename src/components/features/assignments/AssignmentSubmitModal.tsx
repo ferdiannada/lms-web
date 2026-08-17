@@ -85,16 +85,16 @@ export const AssignmentSubmitModal: React.FC<AssignmentSubmitModalProps> = ({
       onClose={handleClose}
       title={assignment ? `Kumpulkan Tugas: ${assignment.title}` : 'Kumpulkan Tugas'}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {errorMsg && (
-          <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="p-4 bg-m3-error-container/50 border border-m3-error/20 text-m3-on-error-container text-xs rounded-[1.25rem] font-medium flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-m3-error" />
             <span>{errorMsg}</span>
           </div>
         )}
 
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-m3-on-surface-variant uppercase tracking-wider">
             Jawaban / Catatan Siswa
           </label>
           <textarea
@@ -102,15 +102,15 @@ export const AssignmentSubmitModal: React.FC<AssignmentSubmitModalProps> = ({
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Tulis uraian jawaban, link repository GitHub, atau catatan untuk guru di sini..."
             rows={4}
-            className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition"
+            className="w-full bg-m3-surface-container border border-m3-outline-variant/50 rounded-xl p-3 text-sm text-m3-on-surface placeholder-m3-on-surface-variant/70 focus:border-m3-primary focus:bg-m3-surface focus:outline-none transition-all duration-300"
           />
         </div>
 
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-m3-on-surface-variant uppercase tracking-wider">
             Unggah Berkas Lampiran Jawaban (ZIP / PDF / Gambar)
           </label>
-          <div className="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center hover:border-indigo-400 bg-slate-50/50 hover:bg-indigo-50/20 transition cursor-pointer relative">
+          <div className="border-2 border-dashed border-m3-outline-variant/50 rounded-2xl p-6 text-center hover:border-m3-primary bg-m3-surface-container/50 hover:bg-m3-primary/5 transition-colors cursor-pointer relative">
             <input
               type="file"
               accept=".zip,.rar,.pdf,.docx,.doc,.png,.jpg,.jpeg"
@@ -127,42 +127,42 @@ export const AssignmentSubmitModal: React.FC<AssignmentSubmitModalProps> = ({
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
             <div className="flex flex-col items-center">
-              <Upload className="w-7 h-7 text-indigo-600 mb-1.5" />
+              <Upload className="w-8 h-8 text-m3-primary mb-2" />
               {file ? (
-                <p className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                <p className="text-sm font-bold text-m3-on-surface flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-m3-primary" />
                   {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
                 </p>
               ) : (
                 <>
-                  <p className="text-xs font-medium text-slate-700">
+                  <p className="text-sm font-bold text-m3-on-surface-variant">
                     Klik atau seret file dokumen / arsip jawaban
                   </p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">ZIP, RAR, PDF, DOCX, PNG (Maks 25MB)</p>
+                  <p className="text-xs text-m3-on-surface-variant/70 mt-1">ZIP, RAR, PDF, DOCX, PNG (Maks 25MB)</p>
                 </>
               )}
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
+        <div className="pt-4 flex justify-end gap-3">
           <button
             type="button"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+            className="px-5 py-2.5 text-xs font-bold text-m3-on-surface-variant hover:bg-m3-surface-container-high rounded-full transition-colors cursor-pointer"
           >
             Batal
           </button>
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 rounded-xl shadow-sm hover:shadow transition flex items-center gap-1.5"
+            disabled={isSubmitting || (!notes.trim() && !file)}
+            className="px-6 py-2.5 bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary font-bold text-xs rounded-full shadow-m3-elevation-1 hover:shadow-m3-elevation-2 transition-all duration-300 ease-out active:scale-95 cursor-pointer disabled:opacity-50 disabled:active:scale-100 flex items-center gap-2"
           >
             {isSubmitting ? (
               <>
-                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Mengirim Tugas...</span>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span>Mengirim...</span>
               </>
             ) : (
               'Kirim Jawaban'
