@@ -10,6 +10,7 @@ import {
   HelpCircle,
   AlertCircle,
   Lock,
+  X,
 } from 'lucide-react';
 
 export const Login: React.FC = () => {
