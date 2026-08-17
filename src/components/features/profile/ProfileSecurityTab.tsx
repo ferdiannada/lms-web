@@ -58,6 +58,12 @@ export const ProfileSecurityTab: React.FC<ProfileSecurityTabProps> = ({ user }) 
       setCurrentPass('');
       setNewPass('');
       setConfirmPass('');
+      
+      if (res.token) {
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1500);
+      }
     } catch (err: any) {
       setError(err.message || 'Gagal mengubah kata sandi. Periksa kata sandi saat ini.');
     } finally {

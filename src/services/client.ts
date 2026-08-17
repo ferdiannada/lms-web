@@ -56,6 +56,18 @@ export async function request<T>(endpoint: string, options: RequestInit = {}): P
         throw new Error('Sesi telah berakhir. Silakan login kembali.');
       }
 
+      if (res.status === 403) {
+        const textClone = await res.clone().text();
+        let errData: any = {};
+        try { errData = JSON.parse(textClone); } catch {}
+        if (errData.error === 'REQUIRE_PASSWORD_CHANGE') {
+          if (window.location.pathname !== '/force-change-password') {
+             window.location.href = '/force-change-password';
+          }
+          throw new Error('REQUIRE_PASSWORD_CHANGE');
+        }
+      }
+
       const contentType = res.headers.get('content-type') || '';
       const text = await res.text();
 

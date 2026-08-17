@@ -15,6 +15,7 @@ const QuizzesPage = lazy(() => import('./pages/QuizzesPage').then((m) => ({ defa
 const QuizPlayer = lazy(() => import('./pages/QuizPlayer').then((m) => ({ default: m.QuizPlayer })));
 const GradebookPage = lazy(() => import('./pages/GradebookPage').then((m) => ({ default: m.GradebookPage })));
 const Profile = lazy(() => import('./pages/Profile').then((m) => ({ default: m.Profile })));
+const ForceChangePassword = lazy(() => import('./pages/ForceChangePassword').then((m) => ({ default: m.ForceChangePassword })));
 
 // Sleek loading fallback for route transitions
 const PageLoader: React.FC = () => (
@@ -52,8 +53,14 @@ const ProtectedLayout: React.FC = () => {
     );
   }
 
+  const location = useLocation();
+
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (user.is_initial_password && location.pathname !== '/force-change-password') {
+    return <Navigate to="/force-change-password" replace />;
   }
 
   return (
@@ -77,6 +84,7 @@ const ProtectedLayout: React.FC = () => {
                   <Route path="/quiz/:id" element={<QuizPlayer />} />
                   <Route path="/grades" element={<GradebookPage />} />
                   <Route path="/profile" element={<Profile />} />
+                  <Route path="/force-change-password" element={<ForceChangePassword />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </PageTransition>

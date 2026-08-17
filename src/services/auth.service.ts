@@ -44,11 +44,17 @@ export const authService = {
     return user;
   },
 
-  async changePassword(currentPass: string, nextPass: string): Promise<{ message: string }> {
-    return await request<{ message: string }>('/auth/change-password', {
+  async changePassword(currentPass: string, nextPass: string): Promise<{ message: string; token?: string }> {
+    const res = await request<{ message: string; token?: string }>('/auth/change-password', {
       method: 'POST',
       body: JSON.stringify({ old_password: currentPass, new_password: nextPass }),
     });
+    
+    if (res.token) {
+      setToken(res.token);
+    }
+    
+    return res;
   },
 
   async updateProfile(data: { name?: string; phone?: string; avatar_url?: string }): Promise<User> {
