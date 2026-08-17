@@ -41,13 +41,8 @@ export const ProfileSecurityTab: React.FC<ProfileSecurityTabProps> = ({ user }) 
     setMessage(null);
     setError(null);
 
-    if (newPass.length < 10) {
-      setError('Kata sandi baru minimal 10 karakter.');
-      return;
-    }
-
-    if (!/[A-Z]/.test(newPass) || !/[a-z]/.test(newPass) || !/[0-9]/.test(newPass) || !/[^A-Za-z0-9]/.test(newPass)) {
-      setError('Kata sandi harus mengandung huruf besar, huruf kecil, angka, serta simbol.');
+    if (newPass.length < 6) {
+      setError('Kata sandi baru minimal 6 karakter.');
       return;
     }
 
@@ -119,7 +114,7 @@ export const ProfileSecurityTab: React.FC<ProfileSecurityTabProps> = ({ user }) 
             Perbarui Kata Sandi Akun
           </h2>
           <p className="text-xs font-medium text-m3-on-surface-variant mt-1">
-            Gunakan kombinasi minimal 10 karakter yang terdiri dari huruf besar, huruf kecil, angka, dan simbol.
+            Gunakan kombinasi minimal 6 karakter yang tidak mudah ditebak oleh orang lain.
           </p>
         </div>
 
@@ -163,7 +158,7 @@ export const ProfileSecurityTab: React.FC<ProfileSecurityTabProps> = ({ user }) 
                   value={newPass}
                   onChange={(e) => setNewPass(e.target.value)}
                   required
-                  placeholder="Minimal 10 karakter"
+                  placeholder="Minimal 6 karakter"
                   className="w-full pl-10 pr-10 py-3 rounded-xl text-xs font-bold text-m3-on-surface bg-m3-surface-container border border-m3-outline focus:border-m3-primary focus:ring-1 focus:ring-m3-primary focus:outline-none transition-all"
                 />
                 <button
@@ -175,6 +170,9 @@ export const ProfileSecurityTab: React.FC<ProfileSecurityTabProps> = ({ user }) 
                   {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              <p className="text-[10px] text-m3-on-surface-variant font-medium mt-1 ml-1">
+                Persyaratan: Kata sandi baru minimal 6 karakter.
+              </p>
 
               {/* Password Strength Indicator */}
               {newPass && (
