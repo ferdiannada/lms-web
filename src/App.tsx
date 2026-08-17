@@ -36,6 +36,7 @@ const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 const ProtectedLayout: React.FC = () => {
   const { user, isLoading } = useAuth();
+  const location = useLocation();
   const [isScrolled, setIsScrolled] = React.useState(false);
 
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
@@ -52,8 +53,6 @@ const ProtectedLayout: React.FC = () => {
       </div>
     );
   }
-
-  const location = useLocation();
 
   if (!user) {
     return <Navigate to="/login" replace />;
