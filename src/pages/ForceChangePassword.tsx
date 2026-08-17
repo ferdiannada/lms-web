@@ -160,10 +160,10 @@ export const ForceChangePassword: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-2">
               {requirements.map((req) => (
                 <div key={req.id} className="flex items-center gap-2">
-                  <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 transition-colors ${req.isValid ? 'bg-emerald-500 text-white' : 'bg-m3-outline-variant/30 text-transparent'}`}>
-                    <Check className="w-2.5 h-2.5" />
+                  <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 transition-colors ${req.isValid ? 'bg-emerald-500 text-white' : 'bg-m3-surface-container-highest border border-m3-outline-variant/50 text-m3-on-surface-variant'}`}>
+                    {req.isValid && <Check className="w-3 h-3" strokeWidth={3} />}
                   </div>
-                  <span className={`text-xs ${req.isValid ? 'text-m3-on-surface' : 'text-m3-on-surface-variant'}`}>
+                  <span className={`text-xs ${req.isValid ? 'text-m3-on-surface font-medium' : 'text-m3-on-surface-variant'}`}>
                     {req.label}
                   </span>
                 </div>
