@@ -115,7 +115,7 @@ export const ForceChangePassword: React.FC = () => {
                 value={currentPass}
                 onChange={(e) => setCurrentPass(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 rounded-xl text-sm text-m3-on-surface bg-m3-surface-container-highest border border-transparent focus:border-m3-primary focus:bg-m3-surface transition-colors outline-none"
+                className="w-full px-4 py-2.5 rounded-xl text-sm text-m3-on-surface bg-transparent border border-m3-outline focus:border-m3-primary focus:ring-1 focus:ring-m3-primary transition-all outline-none"
               />
               <button
                 type="button"
@@ -139,7 +139,7 @@ export const ForceChangePassword: React.FC = () => {
                 value={newPass}
                 onChange={(e) => setNewPass(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 rounded-xl text-sm text-m3-on-surface bg-m3-surface-container-highest border border-transparent focus:border-m3-primary focus:bg-m3-surface transition-colors outline-none"
+                className="w-full px-4 py-2.5 rounded-xl text-sm text-m3-on-surface bg-transparent border border-m3-outline focus:border-m3-primary focus:ring-1 focus:ring-m3-primary transition-all outline-none"
               />
               <button
                 type="button"
@@ -182,8 +182,8 @@ export const ForceChangePassword: React.FC = () => {
                 value={confirmPass}
                 onChange={(e) => setConfirmPass(e.target.value)}
                 required
-                className={`w-full px-4 py-2.5 rounded-xl text-sm text-m3-on-surface bg-m3-surface-container-highest border transition-colors outline-none
-                  ${confirmPass && !passwordsMatch ? 'border-rose-500 focus:border-rose-500' : 'border-transparent focus:border-m3-primary'}
+                className={`w-full px-4 py-2.5 rounded-xl text-sm text-m3-on-surface bg-transparent border transition-all outline-none
+                  ${confirmPass && !passwordsMatch ? 'border-rose-500 focus:border-rose-500 focus:ring-1 focus:ring-rose-500' : 'border-m3-outline focus:border-m3-primary focus:ring-1 focus:ring-m3-primary'}
                 `}
               />
             </div>
