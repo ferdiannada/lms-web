@@ -58,8 +58,15 @@ const ProtectedLayout: React.FC = () => {
     return <Navigate to="/login" replace />;
   }
 
-  if (user.is_initial_password && location.pathname !== '/force-change-password') {
-    return <Navigate to="/force-change-password" replace />;
+  if (user.is_initial_password) {
+    if (location.pathname !== '/force-change-password') {
+      return <Navigate to="/force-change-password" replace />;
+    }
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <ForceChangePassword />
+      </Suspense>
+    );
   }
 
   return (
