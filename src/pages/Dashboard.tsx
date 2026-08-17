@@ -37,69 +37,69 @@ export const Dashboard: React.FC = () => {
   const fetchData = useCallback(async (signal?: AbortSignal) => {
     setIsLoading(true);
     try {
-      const clsData = await api.getClasses(false, { signal });
+      // FAST PATH: Load classes and summary concurrently
+      const [clsData, summary] = await Promise.all([
+        api.getClasses(false, { signal }).catch(() => []),
+        api.getDashboardSummary({ signal }).catch(() => ({ pending_assignments: [], active_quizzes: [], recent_materials: [] }))
+      ]);
+
       if (signal?.aborted) return;
+
       setClasses(clsData);
+      setAssignments(summary.pending_assignments || []);
+      setQuizzes(summary.active_quizzes || []);
+      setMaterials(summary.recent_materials || []);
+      
+      // Matikan loading segera agar UI langsung tampil (Instan!)
+      setIsLoading(false);
 
       if (clsData.length > 0) {
-        const results = await Promise.allSettled(
-          clsData.map((c) =>
-            Promise.allSettled([
-              api.getAssignments(c.id, { signal }),
-              api.getQuizzes(c.id, { signal }),
-              api.getMaterials(c.id, { signal }),
-            ])
-          )
-        );
+        // SLOW PATH (Background): Fetch detailed stats per class to update accurate progress bars
+        const allAsgs: Assignment[] = [...(summary.pending_assignments || [])];
+        const allQzs: Quiz[] = [...(summary.active_quizzes || [])];
+        const allMats: Material[] = [...(summary.recent_materials || [])];
 
-        if (signal?.aborted) return;
+        // Fetch in chunks of 3 to avoid overwhelming network
+        for (let i = 0; i < clsData.length; i += 3) {
+          const chunk = clsData.slice(i, i + 3);
+          const results = await Promise.allSettled(
+            chunk.map((c) =>
+              Promise.allSettled([
+                api.getAssignments(c.id, { signal }),
+                api.getQuizzes(c.id, { signal }),
+                api.getMaterials(c.id, { signal }),
+              ])
+            )
+          );
 
-        const allAsgs: Assignment[] = [];
-        const allQzs: Quiz[] = [];
-        const allMats: Material[] = [];
+          if (signal?.aborted) return;
 
-        results.forEach((res) => {
-          if (res.status === 'fulfilled') {
-            const [asgRes, qzRes, matRes] = res.value;
-            if (asgRes.status === 'fulfilled' && Array.isArray(asgRes.value)) {
-              allAsgs.push(...asgRes.value);
+          results.forEach((res) => {
+            if (res.status === 'fulfilled') {
+              const [asgRes, qzRes, matRes] = res.value;
+              if (asgRes.status === 'fulfilled' && Array.isArray(asgRes.value)) allAsgs.push(...asgRes.value);
+              if (qzRes.status === 'fulfilled' && Array.isArray(qzRes.value)) allQzs.push(...qzRes.value);
+              if (matRes.status === 'fulfilled' && Array.isArray(matRes.value)) allMats.push(...matRes.value);
             }
-            if (qzRes.status === 'fulfilled' && Array.isArray(qzRes.value)) {
-              allQzs.push(...qzRes.value);
-            }
-            if (matRes.status === 'fulfilled' && Array.isArray(matRes.value)) {
-              allMats.push(...matRes.value);
-            }
-          }
-        });
+          });
+        }
 
-        // Deduplicate by ID
+        // Deduplicate and update state silently
         const uniqueAsgs = Array.from(new Map(allAsgs.map((a) => [a.id, a])).values());
         const uniqueQzs = Array.from(new Map(allQzs.map((q) => [q.id, q])).values());
         const uniqueMats = Array.from(new Map(allMats.map((m) => [m.id, m])).values());
 
-        setAssignments(uniqueAsgs);
-        setQuizzes(uniqueQzs);
-        setMaterials(uniqueMats);
-      } else {
-        try {
-          const summary = await api.getDashboardSummary({ signal });
-          if (signal?.aborted) return;
-          setAssignments(summary.pending_assignments || []);
-          setQuizzes(summary.active_quizzes || []);
-          setMaterials(summary.recent_materials || []);
-        } catch {
-          // ignore
+        if (!signal?.aborted) {
+          setAssignments(uniqueAsgs);
+          setQuizzes(uniqueQzs);
+          setMaterials(uniqueMats);
         }
       }
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         console.error('Failed to fetch dashboard data:', err);
       }
-    } finally {
-      if (!signal?.aborted) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   }, []);
 
