@@ -48,12 +48,14 @@ export async function request<T>(endpoint: string, options: RequestInit = {}): P
       });
 
       if (res.status === 401) {
-        removeToken();
-        localStorage.removeItem('pedia_user');
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login';
+        if (endpoint !== '/auth/login') {
+          removeToken();
+          localStorage.removeItem('pedia_user');
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
+          throw new Error('Sesi telah berakhir. Silakan login kembali.');
         }
-        throw new Error('Sesi telah berakhir. Silakan login kembali.');
       }
 
       if (res.status === 403) {
