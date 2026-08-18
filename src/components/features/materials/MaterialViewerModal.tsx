@@ -32,11 +32,10 @@ export const MaterialViewerModal: React.FC<MaterialViewerModalProps> = ({
       setError(null);
       try {
         const safeUrl = sanitizeUrl(fileUrl);
-        const token = getToken();
         const headers: HeadersInit = {};
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
+        // Do not attach the Bearer token for S3 pre-signed URLs 
+        // because AWS/MinIO will reject requests that contain both 
+        // presigned query credentials and Authorization headers (400 Bad Request).
 
         const response = await fetch(safeUrl, { headers });
         if (!response.ok) {
