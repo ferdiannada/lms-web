@@ -1,7 +1,8 @@
-import React from 'react';
-import { Plus, BookOpen, Download, FileText, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, BookOpen, Download, FileText, Trash2, Eye } from 'lucide-react';
 import { Material } from '../../../../types';
 import { sanitizeUrl } from '../../../../utils/security';
+import { MaterialViewerModal } from '../../materials/MaterialViewerModal';
 
 interface MaterialsTabProps {
   materials: Material[];
@@ -16,6 +17,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({
   onOpenUploadModal,
   onDeleteMaterial,
 }) => {
+  const [viewerMaterial, setViewerMaterial] = useState<Material | null>(null);
+
   return (
     <div className="space-y-6">
       {isTeacher && (
@@ -81,19 +84,28 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({
               </div>
 
               {mat.file_url ? (
-                <div className="pt-3 border-t border-m3-outline-variant/20 flex items-center justify-between">
+                <div className="pt-3 border-t border-m3-outline-variant/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-m3-on-surface-variant truncate pr-2">
                     <FileText className="w-3.5 h-3.5 text-m3-primary shrink-0" />
                     <span className="truncate">{mat.file_name || 'Dokumen Materi'}</span>
                   </span>
-                  <a
-                    href={sanitizeUrl(mat.file_url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-m3-on-primary-container bg-m3-primary-container hover:bg-m3-primary/15 rounded-full transition-all active:scale-95 shrink-0"
-                  >
-                    <Download className="w-3.5 h-3.5" /> Unduh
-                  </a>
+                  <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setViewerMaterial(mat)}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-m3-primary hover:bg-m3-primary/90 rounded-full transition-all active:scale-95 shadow-sm cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> Buka
+                    </button>
+                    <a
+                      href={sanitizeUrl(mat.file_url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-m3-on-primary-container bg-m3-primary-container hover:bg-m3-primary/15 rounded-full transition-all active:scale-95 shrink-0"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Unduh
+                    </a>
+                  </div>
                 </div>
               ) : (
                 <div className="pt-3 border-t border-m3-outline-variant/20 text-[11px] text-m3-on-surface-variant italic">
@@ -103,6 +115,15 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({
             </div>
           ))}
         </div>
+      )}
+
+      {viewerMaterial && viewerMaterial.file_url && (
+        <MaterialViewerModal
+          isOpen={!!viewerMaterial}
+          onClose={() => setViewerMaterial(null)}
+          title={viewerMaterial.title}
+          fileUrl={viewerMaterial.file_url}
+        />
       )}
     </div>
   );
