@@ -1,19 +1,15 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { ForumPost, ForumComment, User } from '../types';
+import React, { useEffect, useCallback } from 'react';
+import { ForumPost, User } from '../types';
 import { getToken, getWsUrl } from '../services';
-import { normalizeForumPost, normalizeForumComment } from '../services/forum.service';
-import { useAudioNotification } from './useAudioNotification';
-
-export interface InAppNotificationToast {
-  id: string;
-  title: string;
-  body: string;
-  userName: string;
-  userRole?: string;
-  avatarUrl?: string;
-  timestamp: string;
-  postId: string;
-}
+import { useInAppNotifications } from './useInAppNotifications';
+import {
+  handleWsPostCreated,
+  handleWsPostUpdated,
+  handleWsPostDeleted,
+  handleWsCommentAdded,
+  handleWsCommentUpdated,
+  handleWsCommentDeleted,
+} from '../utils/forumEventReducers';
 
 interface UseClassWebSocketProps {
   classId?: string;
@@ -22,13 +18,7 @@ interface UseClassWebSocketProps {
 }
 
 export function useClassWebSocket({ classId, user, setPosts }: UseClassWebSocketProps) {
-  const [toasts, setToasts] = useState<InAppNotificationToast[]>([]);
-  const { playNotificationChime } = useAudioNotification();
-  const toastTimersRef = useRef<any[]>([]);
-
-  const dismissToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+  const { toasts, pushNotification, dismissToast } = useInAppNotifications();
 
   useEffect(() => {
     if (!classId) return;
@@ -64,101 +54,31 @@ export function useClassWebSocket({ classId, user, setPosts }: UseClassWebSocket
             const payload = data.data;
 
             if (eventType === 'post') {
-              const newPost = normalizeForumPost(payload);
-              setPosts((prev) => {
-                if (prev.some((p) => p.id === newPost.id)) return prev;
-                return [newPost, ...prev];
-              });
+              setPosts((prev) => handleWsPostCreated(prev, payload));
             } else if (eventType === 'post_updated') {
-              const updatedPost = normalizeForumPost(payload);
-              setPosts((prev) =>
-                prev.map((p) => (p.id === updatedPost.id ? { ...p, ...updatedPost, comments: p.comments } : p))
-              );
+              setPosts((prev) => handleWsPostUpdated(prev, payload));
             } else if (eventType === 'post_deleted') {
-              const deletedId = typeof payload === 'string' ? payload : payload?.id;
-              if (deletedId) {
-                setPosts((prev) => prev.filter((p) => p.id !== deletedId));
-              }
+              setPosts((prev) => handleWsPostDeleted(prev, payload));
             } else if (eventType === 'comment') {
-              const newComment = normalizeForumComment(payload);
-              setPosts((prev) =>
-                prev.map((post) => {
-                  if (post.id !== newComment.post_id) return post;
-                  const existingComments = post.comments || [];
-                  if (existingComments.some((c) => c.id === newComment.id)) return post;
-                  return {
-                    ...post,
-                    comments_count: (post.comments_count || 0) + 1,
-                    comments: [...existingComments, newComment],
-                  };
-                })
-              );
+              setPosts((prev) => handleWsCommentAdded(prev, payload));
 
               // Trigger interactive notification toast if comment is from another user
-              if (newComment.user_id && newComment.user_id !== user?.id) {
-                playNotificationChime();
-                const toastItem: InAppNotificationToast = {
-                  id: `toast-${Date.now()}-${Math.random()}`,
-                  title: newComment.parent_id
-                    ? `${newComment.user_name} membalas komentar`
-                    : `${newComment.user_name} mengirim komentar baru`,
-                  body: newComment.content,
-                  userName: newComment.user_name,
-                  userRole: newComment.user_role,
-                  avatarUrl: newComment.user_avatar,
-                  timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-                  postId: newComment.post_id,
-                };
-
-                setToasts((prev) => [toastItem, ...prev.slice(0, 3)]);
-
-                // Auto dismiss after 6s with tracking
-                const timerId = setTimeout(() => {
-                  if (!isUnmounted) {
-                    setToasts((prev) => prev.filter((t) => t.id !== toastItem.id));
-                  }
-                }, 6000);
-                toastTimersRef.current.push(timerId);
-
-                // Browser notification if tab is inactive
-                if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
-                  try {
-                    new Notification(`💬 ${toastItem.title}`, {
-                      body: toastItem.body,
-                      icon: '/logo_smk_new.png',
-                    });
-                  } catch {}
-                }
+              if (payload.user_id && payload.user_id !== user?.id) {
+                pushNotification({
+                  title: payload.parent_id
+                    ? `${payload.user_name} membalas komentar`
+                    : `${payload.user_name} mengirim komentar baru`,
+                  body: payload.content,
+                  userName: payload.user_name,
+                  userRole: payload.user_role,
+                  avatarUrl: payload.user_avatar,
+                  postId: payload.post_id,
+                });
               }
             } else if (eventType === 'comment_updated') {
-              const updatedComment = normalizeForumComment(payload);
-              setPosts((prev) =>
-                prev.map((post) => {
-                  if (post.id !== updatedComment.post_id) return post;
-                  return {
-                    ...post,
-                    comments: (post.comments || []).map((c) =>
-                      c.id === updatedComment.id ? updatedComment : c
-                    ),
-                  };
-                })
-              );
+              setPosts((prev) => handleWsCommentUpdated(prev, payload));
             } else if (eventType === 'comment_deleted') {
-              const commentId = payload?.id;
-              const postId = payload?.post_id;
-              if (commentId) {
-                setPosts((prev) =>
-                  prev.map((post) => {
-                    if (postId && post.id !== postId) return post;
-                    const filtered = (post.comments || []).filter((c) => c.id !== commentId);
-                    return {
-                      ...post,
-                      comments_count: Math.max(0, (post.comments_count || 1) - 1),
-                      comments: filtered,
-                    };
-                  })
-                );
-              }
+              setPosts((prev) => handleWsCommentDeleted(prev, payload));
             }
           } catch (e) {
             console.error('Error handling WebSocket message:', e);
@@ -196,10 +116,8 @@ export function useClassWebSocket({ classId, user, setPosts }: UseClassWebSocket
           ws.close();
         }
       }
-      toastTimersRef.current.forEach(clearTimeout);
-      toastTimersRef.current = [];
     };
-  }, [classId, user?.id, setPosts, playNotificationChime]);
+  }, [classId, user?.id, setPosts, pushNotification]);
 
-  return { toasts, dismissToast, setToasts };
+  return { toasts, dismissToast };
 }

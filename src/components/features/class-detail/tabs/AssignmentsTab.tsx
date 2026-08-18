@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus,
   FileText,
@@ -9,32 +9,98 @@ import {
   Award,
   Users,
 } from 'lucide-react';
-import { Assignment } from '../../../../types';
+import { Assignment, Submission } from '../../../../types';
+import { api } from '../../../../services/api';
+import { AssignmentCreateModal } from '../../assignments/AssignmentCreateModal';
+import { AssignmentSubmitModal } from '../../assignments/AssignmentSubmitModal';
+import { SubmissionsListModal } from '../../assignments/SubmissionsListModal';
+import { GradingModal } from '../../assignments/GradingModal';
 
 interface AssignmentsTabProps {
-  assignments: Assignment[];
+  classId: string;
   isTeacher: boolean;
-  onOpenCreateModal: () => void;
-  onOpenSubmitModal: (asg: Assignment) => void;
-  onOpenSubmissionsList: (asg: Assignment) => void;
-  onDeleteAssignment: (id: string) => Promise<void>;
 }
 
-export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
-  assignments,
-  isTeacher,
-  onOpenCreateModal,
-  onOpenSubmitModal,
-  onOpenSubmissionsList,
-  onDeleteAssignment,
-}) => {
+export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({ classId, isTeacher }) => {
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Modals state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedAsg, setSelectedAsg] = useState<Assignment | null>(null);
+  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  
+  const [isSubmissionsListOpen, setIsSubmissionsListOpen] = useState(false);
+  const [currentSubmissions, setCurrentSubmissions] = useState<Submission[]>([]);
+  
+  const [isGradingModalOpen, setIsGradingModalOpen] = useState(false);
+  const [selectedSub, setSelectedSub] = useState<Submission | null>(null);
+
+  const fetchAssignments = useCallback(async (signal?: AbortSignal) => {
+    setIsLoading(true);
+    try {
+      const data = await api.getAssignments(classId, { signal });
+      if (!signal?.aborted) setAssignments(data);
+    } catch (err: any) {
+      if (err.name !== 'AbortError') console.error('Failed to load assignments:', err);
+    } finally {
+      if (!signal?.aborted) setIsLoading(false);
+    }
+  }, [classId]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchAssignments(controller.signal);
+    return () => controller.abort();
+  }, [fetchAssignments]);
+
+  const handleDeleteAssignment = async (asgId: string) => {
+    if (!confirm('Yakin ingin menghapus tugas ini?')) return;
+    try {
+      await api.deleteAssignment(asgId);
+      setAssignments((prev) => prev.filter((a) => a.id !== asgId));
+    } catch (err) {
+      alert('Gagal menghapus tugas.');
+    }
+  };
+
+  const handleOpenSubmitModal = (asg: Assignment) => {
+    setSelectedAsg(asg);
+    setIsSubmitModalOpen(true);
+  };
+
+  const handleOpenSubmissionsList = async (asg: Assignment) => {
+    setSelectedAsg(asg);
+    try {
+      const subs = await api.getSubmissions(asg.id);
+      setCurrentSubmissions(subs);
+      setIsSubmissionsListOpen(true);
+    } catch (err: any) {
+      alert(err.message || 'Gagal memuat jawaban siswa');
+    }
+  };
+
+  const handleOpenGradingModal = (sub: Submission) => {
+    setSelectedSub(sub);
+    setIsGradingModalOpen(true);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-12 text-center text-slate-500 space-y-3">
+        <div className="inline-block w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-xs font-semibold">Memuat tugas...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {isTeacher && (
         <div className="flex justify-end">
           <button
             type="button"
-            onClick={onOpenCreateModal}
+            onClick={() => setIsCreateModalOpen(true)}
             className="px-6 py-3 bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary font-bold text-xs rounded-full flex items-center gap-2 shadow-m3-elevation-2 active:scale-95 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Buat Penugasan Baru
@@ -83,7 +149,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
                     {isTeacher && (
                       <button
                         type="button"
-                        onClick={() => onDeleteAssignment(asg.id)}
+                        onClick={() => handleDeleteAssignment(asg.id)}
                         title="Hapus Tugas"
                         className="p-2 rounded-xl text-m3-on-surface-variant hover:text-rose-600 hover:bg-rose-50 transition opacity-80 group-hover:opacity-100 cursor-pointer active:scale-90"
                       >
@@ -138,7 +204,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
                       </span>
                       <button
                         type="button"
-                        onClick={() => onOpenSubmissionsList(asg)}
+                        onClick={() => handleOpenSubmissionsList(asg)}
                         className="px-5 py-2.5 text-xs font-bold text-m3-on-primary-container bg-m3-primary-container hover:bg-m3-primary/15 rounded-full transition-all active:scale-95 cursor-pointer"
                       >
                         Periksa Tugas
@@ -151,7 +217,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
                       </span>
                       <button
                         type="button"
-                        onClick={() => onOpenSubmitModal(asg)}
+                        onClick={() => handleOpenSubmitModal(asg)}
                         className={`px-5 py-2.5 text-xs font-bold rounded-full transition-all active:scale-95 cursor-pointer ${
                           isSubmitted
                             ? 'bg-m3-surface-container-highest text-m3-on-surface hover:bg-m3-surface-variant'
@@ -167,6 +233,56 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
             );
           })}
         </div>
+      )}
+
+      {isCreateModalOpen && (
+        <AssignmentCreateModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          defaultClassId={classId}
+          onSuccess={() => {
+            fetchAssignments();
+          }}
+        />
+      )}
+
+      {isSubmitModalOpen && selectedAsg && (
+        <AssignmentSubmitModal
+          isOpen={isSubmitModalOpen}
+          onClose={() => {
+            setIsSubmitModalOpen(false);
+            setSelectedAsg(null);
+          }}
+          assignment={selectedAsg}
+          onSuccess={() => {
+            fetchAssignments();
+          }}
+        />
+      )}
+
+      {isSubmissionsListOpen && selectedAsg && (
+        <SubmissionsListModal
+          isOpen={isSubmissionsListOpen}
+          onClose={() => setIsSubmissionsListOpen(false)}
+          assignment={selectedAsg}
+          submissions={currentSubmissions}
+          onOpenGrading={handleOpenGradingModal}
+        />
+      )}
+
+      {isGradingModalOpen && selectedSub && (
+        <GradingModal
+          isOpen={isGradingModalOpen}
+          onClose={() => {
+            setIsGradingModalOpen(false);
+            setSelectedSub(null);
+            if (selectedAsg) handleOpenSubmissionsList(selectedAsg);
+          }}
+          submission={selectedSub}
+          onSuccess={() => {
+            fetchAssignments();
+          }}
+        />
       )}
     </div>
   );

@@ -5,7 +5,7 @@ import { sanitizeUrl } from '../../../utils/security';
 import { MaterialViewerModal } from './MaterialViewerModal';
 
 interface MaterialCardProps {
-  material: Material & { className?: string };
+  material: Material & { className?: string; rombel?: string };
   isTeacher: boolean;
   onDelete?: (id: string) => void;
 }
@@ -28,8 +28,12 @@ export const MaterialCard: React.FC<MaterialCardProps> = ({
               </div>
               <div className="min-w-0">
                 <h3 className="font-bold text-xs text-slate-900 truncate">{material.title}</h3>
-                {material.className && (
-                  <p className="text-[10px] text-indigo-600 font-semibold">{material.className}</p>
+                {(material.className || material.rombel) && (
+                  <p className="text-[10px] text-indigo-600 font-semibold truncate">
+                    {material.className}
+                    {material.className && material.rombel ? ' • ' : ''}
+                    {material.rombel}
+                  </p>
                 )}
               </div>
             </div>

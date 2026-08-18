@@ -17,6 +17,7 @@ import { AssignmentCreateModal } from '../components/features/assignments/Assign
 import { AssignmentSubmitModal } from '../components/features/assignments/AssignmentSubmitModal';
 import { SubmissionsListModal } from '../components/features/assignments/SubmissionsListModal';
 import { GradingModal } from '../components/features/assignments/GradingModal';
+import { SearchableSelect, SelectOption } from '../components/SearchableSelect';
 
 export const AssignmentsPage: React.FC = () => {
   const { user } = useAuth();
@@ -28,8 +29,8 @@ export const AssignmentsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  const [materials, setMaterials] = useState<(Material & { className?: string })[]>([]);
-  const [assignments, setAssignments] = useState<(Assignment & { className?: string })[]>([]);
+  const [materials, setMaterials] = useState<(Material & { className?: string; rombel?: string })[]>([]);
+  const [assignments, setAssignments] = useState<(Assignment & { className?: string; rombel?: string })[]>([]);
 
   // Modals
   const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
@@ -54,25 +55,32 @@ export const AssignmentsPage: React.FC = () => {
       if (signal?.aborted) return;
       setClasses(clsData);
 
-      const matList: (Material & { className?: string })[] = [];
-      const asgList: (Assignment & { className?: string })[] = [];
+      const matList: (Material & { className?: string; rombel?: string })[] = [];
+      const asgList: (Assignment & { className?: string; rombel?: string })[] = [];
 
-      await Promise.all(
-        clsData.map(async (cls) => {
-          try {
-            const [cMats, cAsgs] = await Promise.all([
-              api.getMaterials(cls.id, { signal }).catch(() => []),
-              api.getAssignments(cls.id, { signal }).catch(() => []),
-            ]);
+      // Concurrency limit to prevent network bottlenecks (N+1 waterfall)
+      const concurrencyLimit = 3;
+      for (let i = 0; i < clsData.length; i += concurrencyLimit) {
+        if (signal?.aborted) return;
+        const chunk = clsData.slice(i, i + concurrencyLimit);
+        
+        await Promise.all(
+          chunk.map(async (cls) => {
+            try {
+              const [cMats, cAsgs] = await Promise.all([
+                api.getMaterials(cls.id, { signal }).catch(() => []),
+                api.getAssignments(cls.id, { signal }).catch(() => []),
+              ]);
 
-            if (signal?.aborted) return;
-            cMats.forEach((m) => matList.push({ ...m, className: cls.name }));
-            cAsgs.forEach((a) => asgList.push({ ...a, className: cls.name }));
-          } catch {
-            // Ignore individual class errors
-          }
-        })
-      );
+              if (signal?.aborted) return;
+              cMats.forEach((m) => matList.push({ ...m, className: cls.name, rombel: cls.rombel }));
+              cAsgs.forEach((a) => asgList.push({ ...a, className: cls.name, rombel: cls.rombel }));
+            } catch {
+              // Ignore individual class errors
+            }
+          })
+        );
+      }
 
       if (!signal?.aborted) {
         setMaterials(matList);
@@ -268,33 +276,32 @@ export const AssignmentsPage: React.FC = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-          <div className="relative w-full sm:w-48">
-            <select
+          <div className="w-full md:w-96 shrink-0 relative z-20">
+            <SearchableSelect
+              options={[
+                {
+                  value: 'all',
+                  label: 'Semua Kelas',
+                  badge: 'SEMUA',
+                  subLabel: `${classes.length} Kelas Terdaftar`,
+                },
+                ...classes.map((c) => ({
+                  value: c.id,
+                  label: c.name,
+                  badge: c.rombel || 'SMK',
+                  subLabel: isTeacher 
+                    ? (c.student_count !== undefined ? `${c.student_count} Siswa` : undefined)
+                    : (c.teacher_name || undefined),
+                }))
+              ]}
               value={selectedClassId}
-              onChange={(e) => setSelectedClassId(e.target.value)}
-              className="w-full pl-4 pr-10 py-3 bg-m3-surface-container border border-m3-outline-variant/50 rounded-xl text-xs font-medium text-m3-on-surface focus:outline-none focus:border-m3-primary focus:bg-m3-surface cursor-pointer shadow-sm transition-all appearance-none"
-            >
-              <option value="all">Semua Kelas ({classes.length})</option>
-              {classes.map((cls) => (
-                <option key={cls.id} value={cls.id}>
-                  {cls.name}
-                </option>
-              ))}
-            </select>
-            {/* Custom arrow for select since appearance-none hides the default one */}
-            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-              <svg className="w-4 h-4 text-m3-on-surface-variant" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
-          </div>
-
-          <div className="relative w-full sm:w-64 group">
-            <Search className="w-4 h-4 text-m3-on-surface-variant absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-m3-primary transition-colors" />
-            <input
-              type="text"
-              placeholder="Cari judul modul / tugas..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-m3-surface-container border border-m3-outline-variant/50 rounded-xl text-xs font-medium text-m3-on-surface placeholder-m3-on-surface-variant focus:outline-none focus:border-m3-primary focus:bg-m3-surface shadow-sm transition-all"
+              onChange={(val) => setSelectedClassId(val)}
+              placeholder="Pilih atau cari kelas..."
+              searchPlaceholder="Ketik nama mapel atau rombel..."
+              icon={<BookOpen className="w-4 h-4 text-m3-primary shrink-0" />}
+              footerLabel="Kelas & Rombel"
+              emptyText="Tidak ada kelas yang cocok"
+              emptySubText="Coba cari dengan nama mapel atau kode kelas"
             />
           </div>
         </div>

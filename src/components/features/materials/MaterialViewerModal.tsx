@@ -126,6 +126,7 @@ export const MaterialViewerModal: React.FC<MaterialViewerModalProps> = ({
         {blobUrl && !error && (
           <iframe
             src={blobUrl}
+            sandbox="allow-scripts allow-downloads allow-popups allow-forms"
             className="w-full h-full border-0 bg-transparent transition-opacity duration-500 rounded-t-2xl sm:rounded-lg"
             style={{ opacity: loading ? 0 : 1 }}
             title={title}

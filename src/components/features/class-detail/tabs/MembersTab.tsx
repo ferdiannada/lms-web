@@ -1,14 +1,45 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Users, GraduationCap, ShieldCheck } from 'lucide-react';
 import { ClassMember } from '../../../../types';
+import { api } from '../../../../services/api';
 
 interface MembersTabProps {
-  members: ClassMember[];
+  classId: string;
 }
 
-export const MembersTab: React.FC<MembersTabProps> = ({ members }) => {
+export const MembersTab: React.FC<MembersTabProps> = ({ classId }) => {
+  const [members, setMembers] = useState<ClassMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchMembers = useCallback(async (signal?: AbortSignal) => {
+    setIsLoading(true);
+    try {
+      const data = await api.getClassMembers(classId, { signal });
+      if (!signal?.aborted) setMembers(data);
+    } catch (err: any) {
+      if (err.name !== 'AbortError') console.error('Failed to load members:', err);
+    } finally {
+      if (!signal?.aborted) setIsLoading(false);
+    }
+  }, [classId]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchMembers(controller.signal);
+    return () => controller.abort();
+  }, [fetchMembers]);
+
   const teachers = members.filter((m) => m.role === 'guru' || m.role === 'admin');
   const students = members.filter((m) => m.role === 'siswa');
+
+  if (isLoading) {
+    return (
+      <div className="p-12 text-center text-slate-500 space-y-3">
+        <div className="inline-block w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-xs font-semibold">Memuat daftar anggota...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

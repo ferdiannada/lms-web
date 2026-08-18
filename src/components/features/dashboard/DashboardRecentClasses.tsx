@@ -75,9 +75,10 @@ export const DashboardRecentClasses: React.FC<DashboardRecentClassesProps> = ({
             const prog = progressMap[cls.id] || { percent: 0, label: '0% Selesai' };
 
             return (
-              <div
+              <Link
                 key={cls.id}
-                className={`p-6 rounded-3xl ${palette.bg} ${palette.text} shadow-md space-y-4 flex flex-col justify-between relative overflow-hidden group hover:scale-[1.02] transition-transform`}
+                to={`/classes/${cls.id}`}
+                className={`p-6 flex flex-col justify-between rounded-3xl ${palette.bg} ${palette.text} shadow-md space-y-4 relative overflow-hidden group hover:scale-[1.02] transition-transform`}
               >
                 <div className="space-y-2 relative z-10">
                   <div className="flex items-center justify-between">
@@ -110,15 +111,14 @@ export const DashboardRecentClasses: React.FC<DashboardRecentClassesProps> = ({
                 </div>
 
                 <div className="pt-2 flex justify-end relative z-10">
-                  <Link
-                    to={`/classes/${cls.id}`}
+                  <div
                     className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl transition ${palette.arrowBtn}`}
                   >
                     <span>Masuk Kelas</span>
                     <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
+                  </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

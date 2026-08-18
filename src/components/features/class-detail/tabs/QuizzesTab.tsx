@@ -1,28 +1,64 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, HelpCircle, Clock, Award, Play, CheckCircle2, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Quiz } from '../../../../types';
+import { api } from '../../../../services/api';
+import { QuizCreateModal } from '../../quizzes/QuizCreateModal';
 
 interface QuizzesTabProps {
-  quizzes: Quiz[];
+  classId: string;
   isTeacher: boolean;
-  onOpenCreateModal: () => void;
-  onDeleteQuiz: (id: string) => Promise<void>;
 }
 
-export const QuizzesTab: React.FC<QuizzesTabProps> = ({
-  quizzes,
-  isTeacher,
-  onOpenCreateModal,
-  onDeleteQuiz,
-}) => {
+export const QuizzesTab: React.FC<QuizzesTabProps> = ({ classId, isTeacher }) => {
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const fetchQuizzes = useCallback(async (signal?: AbortSignal) => {
+    setIsLoading(true);
+    try {
+      const data = await api.getQuizzes(classId, { signal });
+      if (!signal?.aborted) setQuizzes(data);
+    } catch (err: any) {
+      if (err.name !== 'AbortError') console.error('Failed to load quizzes:', err);
+    } finally {
+      if (!signal?.aborted) setIsLoading(false);
+    }
+  }, [classId]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchQuizzes(controller.signal);
+    return () => controller.abort();
+  }, [fetchQuizzes]);
+
+  const handleDeleteQuiz = async (quizId: string) => {
+    if (!confirm('Yakin ingin menghapus kuis ini?')) return;
+    try {
+      await api.deleteQuiz(quizId);
+      setQuizzes((prev) => prev.filter((q) => q.id !== quizId));
+    } catch (err) {
+      alert('Gagal menghapus kuis.');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-12 text-center text-slate-500 space-y-3">
+        <div className="inline-block w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-xs font-semibold">Memuat ujian/kuis...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {isTeacher && (
         <div className="flex justify-end">
           <button
             type="button"
-            onClick={onOpenCreateModal}
+            onClick={() => setIsCreateModalOpen(true)}
             className="px-6 py-3 bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary font-bold text-xs rounded-full flex items-center gap-2 shadow-m3-elevation-2 active:scale-95 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Buat Kuis & Ujian Baru
@@ -68,7 +104,7 @@ export const QuizzesTab: React.FC<QuizzesTabProps> = ({
                     {isTeacher && (
                       <button
                         type="button"
-                        onClick={() => onDeleteQuiz(qz.id)}
+                        onClick={() => handleDeleteQuiz(qz.id)}
                         title="Hapus Kuis"
                         className="p-2 rounded-xl text-m3-on-surface-variant hover:text-rose-600 hover:bg-rose-50 transition opacity-80 group-hover:opacity-100 cursor-pointer active:scale-90"
                       >
@@ -121,6 +157,17 @@ export const QuizzesTab: React.FC<QuizzesTabProps> = ({
             );
           })}
         </div>
+      )}
+
+      {isCreateModalOpen && (
+        <QuizCreateModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          defaultClassId={classId}
+          onSuccess={() => {
+            fetchQuizzes();
+          }}
+        />
       )}
     </div>
   );

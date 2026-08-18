@@ -18,11 +18,23 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3002,
       host: true,
+      allowedHosts: ['lms-web.test'],
+      hmr: {
+        host: 'localhost',
+        port: 3002,
+      },
       proxy: {
         '/api': {
           target,
           changeOrigin: true,
           secure: true,
+          rewrite: (path) => path,
+          configure: (proxy, _options) => {
+            proxy.on('proxyReq', (proxyReq, req, _res) => {
+              proxyReq.setHeader('Origin', target as string);
+              proxyReq.setHeader('Referer', `${target}/`);
+            });
+          },
         },
         '/uploads': {
           target,

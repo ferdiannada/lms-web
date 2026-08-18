@@ -2,12 +2,13 @@
  * Security utilities for input sanitization and safe URL handling.
  */
 
-const SAFE_URL_PATTERN = /^(https?:\/\/|mailto:|tel:|\/|\.\/|\.\.\/)/i;
-const DANGEROUS_PROTOCOLS = /^(javascript:|data:|vbscript:)/i;
+// Explicitly dangerous schemes and control character patterns
+const DANGEROUS_PROTOCOLS = /^(javascript|vbscript|data|file):/i;
+const PROTOCOL_RELATIVE_PATTERN = /^(\/\/|\\\\)/;
 
 /**
- * Validates and sanitizes a URL to prevent DOM XSS via malicious pseudo-protocols like javascript:.
- * Only http:, https:, mailto:, tel:, or relative paths are permitted.
+ * Validates and sanitizes a URL to prevent DOM XSS and open redirect attacks.
+ * Only http:, https:, mailto:, tel:, or root-relative paths (/...) are permitted.
  *
  * @param url The raw URL string
  * @param fallback Optional fallback if invalid (default: '#')
@@ -15,27 +16,62 @@ const DANGEROUS_PROTOCOLS = /^(javascript:|data:|vbscript:)/i;
  */
 export function sanitizeUrl(url: string | undefined | null, fallback: string = '#'): string {
   if (!url) return '';
-  const trimmed = url.trim();
+  
+  // Remove ASCII control characters and whitespace
+  // eslint-disable-next-line no-control-regex
+  const cleaned = url.replace(/[\x00-\x1F\x7F-\x9F\s]+/g, '').trim();
+  if (!cleaned) return fallback;
 
-  // Explicitly block dangerous protocols
-  if (DANGEROUS_PROTOCOLS.test(trimmed)) {
+  // Block protocol-relative URLs (e.g. //evil.com)
+  if (PROTOCOL_RELATIVE_PATTERN.test(cleaned)) {
     return fallback;
   }
 
-  // Must match safe protocol or relative root
-  if (SAFE_URL_PATTERN.test(trimmed) || !trimmed.includes(':')) {
-    return trimmed;
+  // Block dangerous pseudo-protocols
+  if (DANGEROUS_PROTOCOLS.test(cleaned)) {
+    return fallback;
+  }
+
+  // Safe schemes or single-slash relative path
+  if (
+    cleaned.startsWith('https://') ||
+    cleaned.startsWith('http://') ||
+    cleaned.startsWith('mailto:') ||
+    cleaned.startsWith('tel:') ||
+    (cleaned.startsWith('/') && !cleaned.startsWith('//')) ||
+    cleaned.startsWith('./') ||
+    cleaned.startsWith('../')
+  ) {
+    return cleaned;
+  }
+
+  // If no protocol is present and doesn't contain a colon, treat as relative path
+  if (!cleaned.includes(':')) {
+    return cleaned;
   }
 
   return fallback;
 }
 
 /**
- * Checks whether a URL is considered safe for navigation/opening.
+ * Checks whether a URL is considered safe for navigation or opening.
  */
 export function isSafeUrl(url: string | undefined | null): boolean {
   if (!url) return false;
-  const trimmed = url.trim();
-  if (DANGEROUS_PROTOCOLS.test(trimmed)) return false;
-  return SAFE_URL_PATTERN.test(trimmed) || !trimmed.includes(':');
+  // eslint-disable-next-line no-control-regex
+  const cleaned = url.replace(/[\x00-\x1F\x7F-\x9F\s]+/g, '').trim();
+  if (!cleaned || PROTOCOL_RELATIVE_PATTERN.test(cleaned) || DANGEROUS_PROTOCOLS.test(cleaned)) {
+    return false;
+  }
+
+  return (
+    cleaned.startsWith('https://') ||
+    cleaned.startsWith('http://') ||
+    cleaned.startsWith('mailto:') ||
+    cleaned.startsWith('tel:') ||
+    (cleaned.startsWith('/') && !cleaned.startsWith('//')) ||
+    cleaned.startsWith('./') ||
+    cleaned.startsWith('../') ||
+    !cleaned.includes(':')
+  );
 }

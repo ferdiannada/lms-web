@@ -38,6 +38,13 @@ const ProtectedLayout: React.FC = () => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
   const [isScrolled, setIsScrolled] = React.useState(false);
+  const mainRef = React.useRef<HTMLElement>(null);
+
+  React.useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, [location.pathname]);
 
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
     const scrolled = e.currentTarget.scrollTop > 10;
@@ -78,6 +85,7 @@ const ProtectedLayout: React.FC = () => {
       <div className="flex flex-col flex-1 overflow-hidden min-w-0 relative">
         <Navbar isScrolled={isScrolled} />
         <main 
+          ref={mainRef}
           className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 relative"
           onScroll={handleScroll}
         >

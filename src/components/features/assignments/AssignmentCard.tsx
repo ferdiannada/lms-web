@@ -5,7 +5,7 @@ import { Assignment } from '../../../types';
 import { MaterialViewerModal } from '../materials/MaterialViewerModal';
 
 interface AssignmentCardProps {
-  assignment: Assignment & { className?: string };
+  assignment: Assignment & { className?: string; rombel?: string };
   isTeacher: boolean;
   onDelete?: (id: string) => void;
   onOpenSubmissions?: (asg: Assignment) => void;
@@ -34,8 +34,12 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
               </div>
               <div className="min-w-0">
                 <h3 className="font-bold text-xs text-slate-900 truncate">{assignment.title}</h3>
-                {assignment.className && (
-                  <p className="text-[10px] text-indigo-600 font-semibold">{assignment.className}</p>
+                {(assignment.className || assignment.rombel) && (
+                  <p className="text-[10px] text-indigo-600 font-semibold truncate">
+                    {assignment.className}
+                    {assignment.className && assignment.rombel ? ' • ' : ''}
+                    {assignment.rombel}
+                  </p>
                 )}
               </div>
             </div>

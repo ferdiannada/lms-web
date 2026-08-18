@@ -31,11 +31,28 @@ const MIME_TYPES = {
   '.zip': 'application/zip',
 };
 
+// Comprehensive Defense-in-Depth Security Headers
 const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'SAMEORIGIN',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+  'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+  'Cross-Origin-Resource-Policy': 'cross-origin',
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "img-src 'self' data: https: blob:",
+    "connect-src 'self' https: wss: ws:",
+    "frame-src 'self' blob:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'self'",
+  ].join('; '),
 };
 
 function proxyRequest(req, res, targetUrl) {
@@ -44,6 +61,10 @@ function proxyRequest(req, res, targetUrl) {
     const isHttps = parsed.protocol === 'https:';
     const client = isHttps ? https : http;
     const defaultPort = isHttps ? 443 : 80;
+
+    const clientIp = req.socket.remoteAddress || '';
+    const existingXff = req.headers['x-forwarded-for'];
+    const xff = existingXff ? `${existingXff}, ${clientIp}` : clientIp;
 
     const options = {
       hostname: parsed.hostname,
@@ -54,8 +75,8 @@ function proxyRequest(req, res, targetUrl) {
       headers: {
         ...req.headers,
         host: parsed.host,
-        'x-forwarded-for': req.socket.remoteAddress || '',
-        'x-forwarded-proto': req.headers['x-forwarded-proto'] || 'http',
+        'x-forwarded-for': xff,
+        'x-forwarded-proto': req.headers['x-forwarded-proto'] || (isHttps ? 'https' : 'http'),
       },
     };
 
@@ -99,26 +120,32 @@ const server = http.createServer((req, res) => {
     return proxyRequest(req, res, BACKEND_TARGET);
   }
 
-  // 2. Serve static SPA files with Path Traversal Protection
+  // 2. Serve static SPA files with strict Path Traversal & Null-Byte Protection
   let safePath = '';
   try {
-    safePath = decodeURIComponent(req.url.split('?')[0]);
+    const rawPath = req.url.split('?')[0];
+    if (rawPath.includes('\0') || rawPath.includes('%00')) {
+      res.writeHead(400, { 'Content-Type': 'text/plain', ...SECURITY_HEADERS });
+      return res.end('400 Bad Request: Invalid Characters');
+    }
+    safePath = decodeURIComponent(rawPath);
   } catch {
     res.writeHead(400, { 'Content-Type': 'text/plain', ...SECURITY_HEADERS });
-    return res.end('400 Bad Request');
+    return res.end('400 Bad Request: Malformed URI');
   }
-
-  let filePath = path.resolve(DIST_DIR, safePath.replace(/^\/+/, ''));
 
   // If root requested, serve index.html
   if (safePath === '/' || safePath === '') {
-    filePath = path.resolve(DIST_DIR, 'index.html');
+    safePath = '/index.html';
   }
 
-  // Canonical Path Boundary Enforcement
-  if (!filePath.startsWith(DIST_DIR)) {
+  const filePath = path.resolve(DIST_DIR, safePath.replace(/^\/+/, ''));
+
+  // Strict Canonical Path Boundary Enforcement
+  const relativeFromDist = path.relative(DIST_DIR, filePath);
+  if (relativeFromDist.startsWith('..') || path.isAbsolute(relativeFromDist)) {
     res.writeHead(403, { 'Content-Type': 'text/plain', ...SECURITY_HEADERS });
-    return res.end('403 Forbidden');
+    return res.end('403 Forbidden: Directory traversal blocked');
   }
 
   fs.stat(filePath, (err, stats) => {
@@ -155,6 +182,65 @@ const server = http.createServer((req, res) => {
       });
     }
   });
+});
+
+// WebSocket Upgrade Proxying
+server.on('upgrade', (req, socket, head) => {
+  try {
+    const parsed = new URL(BACKEND_TARGET);
+    const isHttps = parsed.protocol === 'https:';
+    const targetPort = parsed.port ? parseInt(parsed.port, 10) : (isHttps ? 443 : 80);
+
+    const clientIp = req.socket.remoteAddress || '';
+    const existingXff = req.headers['x-forwarded-for'];
+    const xff = existingXff ? `${existingXff}, ${clientIp}` : clientIp;
+
+    const proxyOptions = {
+      hostname: parsed.hostname,
+      port: targetPort,
+      path: req.url,
+      method: 'GET',
+      headers: {
+        ...req.headers,
+        host: parsed.host,
+        'x-forwarded-for': xff,
+        'x-forwarded-proto': isHttps ? 'https' : 'http',
+      },
+    };
+
+    const client = isHttps ? https : http;
+    const proxyReq = client.request(proxyOptions);
+
+    proxyReq.on('upgrade', (proxyRes, proxySocket, proxyHead) => {
+      socket.write(
+        `HTTP/${proxyRes.httpVersion} ${proxyRes.statusCode} ${proxyRes.statusMessage}\r\n` +
+        Object.entries(proxyRes.headers)
+          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}\r\n`)
+          .join('') +
+        '\r\n'
+      );
+
+      if (proxyHead && proxyHead.length > 0) {
+        socket.write(proxyHead);
+      }
+      if (head && head.length > 0) {
+        proxySocket.write(head);
+      }
+
+      proxySocket.pipe(socket);
+      socket.pipe(proxySocket);
+    });
+
+    proxyReq.on('error', (err) => {
+      console.error('[WS Proxy Error]:', err.message);
+      socket.destroy();
+    });
+
+    proxyReq.end();
+  } catch (err) {
+    console.error('[WS Upgrade Exception]:', err.message);
+    socket.destroy();
+  }
 });
 
 server.listen(PORT, '0.0.0.0', () => {
