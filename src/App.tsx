@@ -40,7 +40,10 @@ const ProtectedLayout: React.FC = () => {
   const [isScrolled, setIsScrolled] = React.useState(false);
 
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
-    setIsScrolled(e.currentTarget.scrollTop > 10);
+    const scrolled = e.currentTarget.scrollTop > 10;
+    if (scrolled !== isScrolled) {
+      setIsScrolled(scrolled);
+    }
   };
 
   if (isLoading) {

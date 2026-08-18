@@ -18,7 +18,7 @@ export const Navbar: React.FC<NavbarProps> = ({ isScrolled = false }) => {
       <header 
         className={`pointer-events-auto flex items-center justify-between text-m3-on-surface transition-all duration-300 ease-out ${
           isScrolled 
-            ? 'h-14 w-full px-6 py-2 rounded-full bg-white/60 backdrop-blur-xl backdrop-saturate-200 shadow-lg border border-white/40' 
+            ? 'h-14 w-full px-6 py-2 rounded-full bg-m3-surface/95 backdrop-blur-md shadow-md border border-m3-outline-variant/30' 
             : 'h-16 w-full px-4 lg:px-8 py-3 bg-m3-surface shadow-none border-b border-m3-outline-variant/20 rounded-none'
         }`}
       >
