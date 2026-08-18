@@ -189,7 +189,12 @@ export function useClassWebSocket({ classId, user, setPosts }: UseClassWebSocket
       if (ws) {
         ws.onclose = null;
         ws.onerror = null;
-        ws.close();
+        ws.onmessage = null;
+        if (ws.readyState === WebSocket.CONNECTING) {
+          ws.onopen = () => ws?.close();
+        } else if (ws.readyState === WebSocket.OPEN) {
+          ws.close();
+        }
       }
       toastTimersRef.current.forEach(clearTimeout);
       toastTimersRef.current = [];
