@@ -110,14 +110,6 @@ export const DashboardRecentClasses: React.FC<DashboardRecentClassesProps> = ({
                   </div>
                 </div>
 
-                <div className="pt-2 flex justify-end relative z-10">
-                  <div
-                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl transition ${palette.arrowBtn}`}
-                  >
-                    <span>Masuk Kelas</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </div>
-                </div>
               </Link>
             );
           })}
