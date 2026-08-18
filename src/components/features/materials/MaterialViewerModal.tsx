@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Loader2, Download, AlertCircle } from 'lucide-react';
 import { sanitizeUrl } from '../../../utils/security';
 import { getToken } from '../../../services/storage';
@@ -32,10 +33,11 @@ export const MaterialViewerModal: React.FC<MaterialViewerModalProps> = ({
       setError(null);
       try {
         const safeUrl = sanitizeUrl(fileUrl);
+        const token = getToken();
         const headers: HeadersInit = {};
-        // Do not attach the Bearer token for S3 pre-signed URLs 
-        // because AWS/MinIO will reject requests that contain both 
-        // presigned query credentials and Authorization headers (400 Bad Request).
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
 
         const response = await fetch(safeUrl, { headers });
         if (!response.ok) {
@@ -64,8 +66,8 @@ export const MaterialViewerModal: React.FC<MaterialViewerModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] bg-[#141218] flex flex-col animate-in fade-in duration-200">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] bg-[#141218] flex flex-col animate-in fade-in duration-200">
       {/* Material Design 3 Top App Bar (Dark Theme) */}
       <div className="flex items-center h-16 px-2 sm:px-4 bg-[#141218] text-[#E6E0E9] shrink-0 z-10 shadow-sm">
         <button
@@ -127,6 +129,7 @@ export const MaterialViewerModal: React.FC<MaterialViewerModalProps> = ({
           />
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
