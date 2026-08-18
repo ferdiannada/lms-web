@@ -1,0 +1,29 @@
+name: Deploy LMS Web
+
+on:
+  push:
+    branches:
+      - main  # Ganti dengan branch yang Anda gunakan (misal: master)
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Menjalankan Perintah Deploy
+        run: |
+          # 1. Masuk ke direktori project lms-web yang sudah ada di PC Server
+          # PENTING: Ganti path di bawah ini dengan lokasi asli folder lms-web di PC Server Anda
+          cd ~/Apps/lms-web
+          
+          # 2. Tarik kode terbaru dari GitHub
+          git pull origin main
+          
+          # 3. Install dependencies (berjaga-jaga jika ada library baru yang ditambahkan)
+          npm install
+          
+          # 4. Build aplikasi React/Vite
+          npm run build
+          
+          # 5. Restart PM2 agar perubahan langsung aktif
+          pm2 restart lms-web
