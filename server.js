@@ -32,28 +32,36 @@ const MIME_TYPES = {
 };
 
 // Comprehensive Defense-in-Depth Security Headers
-const SECURITY_HEADERS = {
-  'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'SAMEORIGIN',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
-  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
-  'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-  'Cross-Origin-Resource-Policy': 'cross-origin',
-  'Content-Security-Policy': [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com data:",
-    "img-src 'self' data: https: blob:",
-    "connect-src 'self' https: wss: ws:",
-    "frame-src 'self' blob:",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'self'",
-  ].join('; '),
-};
+function getSecurityHeaders(req) {
+  const isHttps = req?.headers?.['x-forwarded-proto'] === 'https' || req?.socket?.encrypted;
+  const headers = {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'SAMEORIGIN',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+    'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+    'Cross-Origin-Resource-Policy': 'cross-origin',
+    'Content-Security-Policy': [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com data:",
+      "img-src 'self' data: https: blob:",
+      "connect-src 'self' https: wss: ws: https://cloudflareinsights.com",
+      "frame-src 'self' blob:",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'self'",
+    ].join('; '),
+  };
+
+  if (isHttps) {
+    headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload';
+  }
+
+  return headers;
+}
 
 function proxyRequest(req, res, targetUrl) {
   try {
@@ -83,7 +91,7 @@ function proxyRequest(req, res, targetUrl) {
     const proxyReq = client.request(options, (proxyRes) => {
       res.writeHead(proxyRes.statusCode || 500, {
         ...proxyRes.headers,
-        ...SECURITY_HEADERS,
+        ...getSecurityHeaders(req),
       });
       proxyRes.pipe(res, { end: true });
     });
@@ -91,7 +99,7 @@ function proxyRequest(req, res, targetUrl) {
     proxyReq.on('timeout', () => {
       proxyReq.destroy();
       if (!res.headersSent) {
-        res.writeHead(504, { 'Content-Type': 'application/json', ...SECURITY_HEADERS });
+        res.writeHead(504, { 'Content-Type': 'application/json', ...getSecurityHeaders(req) });
         res.end(JSON.stringify({ error: 'Backend gateway timeout' }));
       }
     });
@@ -99,7 +107,7 @@ function proxyRequest(req, res, targetUrl) {
     proxyReq.on('error', (err) => {
       console.error(`[Proxy Error] ${req.method} ${req.url}:`, err.message);
       if (!res.headersSent) {
-        res.writeHead(502, { 'Content-Type': 'application/json', ...SECURITY_HEADERS });
+        res.writeHead(502, { 'Content-Type': 'application/json', ...getSecurityHeaders(req) });
         res.end(JSON.stringify({ error: 'Backend gateway connection failed' }));
       }
     });
@@ -108,7 +116,7 @@ function proxyRequest(req, res, targetUrl) {
   } catch (err) {
     console.error(`[Proxy Error Exception] ${req.method} ${req.url}:`, err.message);
     if (!res.headersSent) {
-      res.writeHead(500, { 'Content-Type': 'application/json', ...SECURITY_HEADERS });
+      res.writeHead(500, { 'Content-Type': 'application/json', ...getSecurityHeaders(req) });
       res.end(JSON.stringify({ error: 'Internal proxy configuration error' }));
     }
   }
@@ -125,12 +133,12 @@ const server = http.createServer((req, res) => {
   try {
     const rawPath = req.url.split('?')[0];
     if (rawPath.includes('\0') || rawPath.includes('%00')) {
-      res.writeHead(400, { 'Content-Type': 'text/plain', ...SECURITY_HEADERS });
+      res.writeHead(400, { 'Content-Type': 'text/plain', ...getSecurityHeaders(req) });
       return res.end('400 Bad Request: Invalid Characters');
     }
     safePath = decodeURIComponent(rawPath);
   } catch {
-    res.writeHead(400, { 'Content-Type': 'text/plain', ...SECURITY_HEADERS });
+    res.writeHead(400, { 'Content-Type': 'text/plain', ...getSecurityHeaders(req) });
     return res.end('400 Bad Request: Malformed URI');
   }
 
@@ -144,7 +152,7 @@ const server = http.createServer((req, res) => {
   // Strict Canonical Path Boundary Enforcement
   const relativeFromDist = path.relative(DIST_DIR, filePath);
   if (relativeFromDist.startsWith('..') || path.isAbsolute(relativeFromDist)) {
-    res.writeHead(403, { 'Content-Type': 'text/plain', ...SECURITY_HEADERS });
+    res.writeHead(403, { 'Content-Type': 'text/plain', ...getSecurityHeaders(req) });
     return res.end('403 Forbidden: Directory traversal blocked');
   }
 
@@ -156,7 +164,7 @@ const server = http.createServer((req, res) => {
 
       const headers = {
         'Content-Type': contentType,
-        ...SECURITY_HEADERS,
+        ...getSecurityHeaders(req),
         'Cache-Control': isImmutable
           ? 'public, max-age=31536000, immutable'
           : 'no-cache, no-store, must-revalidate',
@@ -169,13 +177,13 @@ const server = http.createServer((req, res) => {
       const indexPath = path.resolve(DIST_DIR, 'index.html');
       fs.readFile(indexPath, (indexErr, content) => {
         if (indexErr) {
-          res.writeHead(404, { 'Content-Type': 'text/plain', ...SECURITY_HEADERS });
+          res.writeHead(404, { 'Content-Type': 'text/plain', ...getSecurityHeaders(req) });
           res.end('404 - LMS Web build not found. Please run npm run build.');
         } else {
           res.writeHead(200, {
             'Content-Type': 'text/html; charset=utf-8',
             'Cache-Control': 'no-cache, no-store, must-revalidate',
-            ...SECURITY_HEADERS,
+            ...getSecurityHeaders(req),
           });
           res.end(content);
         }
